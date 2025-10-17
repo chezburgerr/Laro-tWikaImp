@@ -1,0 +1,104 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Bulk Add Distractors - Level {{ level }}</h1>
+        <a href="{{ url_for('admin.manage_distractors') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Distractors
+        </a>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        <strong>Level {{ level }}:</strong> Adding distractors for {{ questions|length }} questions. 
+        Fill in at least one language field for each question you want to add a distractor for.
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.process_bulk_add_distractors') }}">
+        <input type="hidden" name="level" value="{{ level }}">
+        
+        {% for question in questions %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Question {{ question.itemnum }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="english_{{ question.itemnum }}" class="form-label">English</label>
+                            <textarea class="form-control" id="english_{{ question.itemnum }}" 
+                                      name="english_{{ question.itemnum }}" rows="2" 
+                                      placeholder="Enter English distractor text"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="tagalog_{{ question.itemnum }}" class="form-label">Tagalog</label>
+                            <textarea class="form-control" id="tagalog_{{ question.itemnum }}" 
+                                      name="tagalog_{{ question.itemnum }}" rows="2" 
+                                      placeholder="Enter Tagalog distractor text"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="waray_{{ question.itemnum }}" class="form-label">Waray</label>
+                            <textarea class="form-control" id="waray_{{ question.itemnum }}" 
+                                      name="waray_{{ question.itemnum }}" rows="2" 
+                                      placeholder="Enter Waray distractor text"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="cebuano_{{ question.itemnum }}" class="form-label">Cebuano</label>
+                            <textarea class="form-control" id="cebuano_{{ question.itemnum }}" 
+                                      name="cebuano_{{ question.itemnum }}" rows="2" 
+                                      placeholder="Enter Cebuano distractor text"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="itemnum_{{ question.itemnum }}" value="{{ question.itemnum }}">
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="d-flex justify-content-end gap-2 mb-4">
+            <a href="{{ url_for('admin.manage_distractors') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save"></i> Add All Distractors
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Add validation to ensure at least one language field is filled for each question
+document.querySelector('form').addEventListener('submit', function(e) {
+    let hasContent = false;
+    const questions = {{ questions|length }};
+    
+    for (let i = 0; i < questions; i++) {
+        const question = {{ questions|tojson }};
+        const itemnum = question[i].itemnum;
+        
+        const english = document.getElementById(`english_${itemnum}`).value.trim();
+        const tagalog = document.getElementById(`tagalog_${itemnum}`).value.trim();
+        const waray = document.getElementById(`waray_${itemnum}`).value.trim();
+        const cebuano = document.getElementById(`cebuano_${itemnum}`).value.trim();
+        
+        if (english || tagalog || waray || cebuano) {
+            hasContent = true;
+            break;
+        }
+    }
+    
+    if (!hasContent) {
+        e.preventDefault();
+        alert('Please fill in at least one language field for at least one question.');
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,15 @@
+{% extends 'admin/layout.html' %}
+{% block title %}Edit User{% endblock %}
+{% block content %}
+<h2>Edit {{ user.username }}</h2>
+<form method="POST">
+  <label>Username: <input type="text" name="username" value="{{ user.username }}"></label><br>
+  <label>Email: <input type="email" name="email" value="{{ user.email }}"></label><br>
+  <label>Role: <input type="text" name="role" value="{{ user.role }}"></label><br>
+  <label>Coins: <input type="number" name="coins" value="{{ user.coins }}"></label><br>
+  <label>Lives: <input type="number" name="lives" value="{{ user.lives }}"></label><br>
+  <label>Preferred Language: <input type="text" name="preferred_language" value="{{ user.preferred_language }}"></label><br>
+  <label>Lesson Language: <input type="text" name="lesson_language" value="{{ user.lesson_language }}"></label><br>
+  <button type="submit">Save Changes</button>
+</form>
+{% endblock %}

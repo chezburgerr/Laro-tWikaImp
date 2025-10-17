@@ -1,0 +1,319 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500&display=swap');
+
+body {
+  font-family: 'Fredoka', sans-serif;
+  background: #fff8ed;
+}
+
+.leaderboard-container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 3rem;
+  background: #fffdf8;
+  border-radius: 25px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+  border: 4px solid #ffb347;
+}
+
+.tabs {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+
+.tab-button {
+  padding: 15px 30px;
+  background-color: #ffe0b2;
+  border: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #333;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+  border: 2px solid #ffb347;
+}
+
+.tab-button.active {
+  background-color: #ff7043;
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(255, 112, 67, 0.4);
+}
+
+.tab-button:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.lesson-dropdown {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.lesson-dropdown label {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+  margin-right: 1rem;
+}
+
+.lesson-dropdown select {
+  padding: 12px 20px;
+  font-size: 1.1rem;
+  border-radius: 15px;
+  border: 3px solid #ffd180;
+  background: #fff3e0;
+  transition: all 0.3s ease;
+  font-weight: bold;
+}
+
+.lesson-dropdown select:focus {
+  outline: none;
+  border-color: #ff7043;
+}
+
+.card {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border: 3px solid #ffb347;
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  font-size: 1.6rem;
+  padding: 20px;
+  font-weight: bold;
+  background: linear-gradient(135deg, #ffb347, #ffa500);
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.bg-warning {
+  background: linear-gradient(to right, #fff176, #ffe082) !important;
+  color: #4e342e;
+}
+
+.list-group-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 25px;
+  border-bottom: 2px solid #f0f0f0;
+  font-size: 1.2rem;
+  background: #fff;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.list-group-item:hover {
+  background-color: #fffde7;
+  transform: scale(1.02);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.list-group-item:first-child {
+  background: linear-gradient(135deg, #fff9c4, #fff59d);
+  font-weight: bold;
+  font-size: 1.3rem;
+}
+
+.list-group-item:nth-child(2) {
+  background: linear-gradient(135deg, #fffde7, #fff8e1);
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+.list-group-item:nth-child(3) {
+  background: linear-gradient(135deg, #fffef7, #fffdf8);
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.crown {
+  font-size: 1.5rem;
+  margin-right: 8px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Special styling for top 3 positions */
+.list-group-item:first-child::before {
+  content: "🥇";
+  font-size: 1.5rem;
+  margin-right: 10px;
+}
+
+.list-group-item:nth-child(2)::before {
+  content: "🥈";
+  font-size: 1.4rem;
+  margin-right: 10px;
+}
+
+.list-group-item:nth-child(3)::before {
+  content: "🥉";
+  font-size: 1.3rem;
+  margin-right: 10px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .leaderboard-container {
+    max-width: 95%;
+    padding: 2rem;
+  }
+  
+  .tabs {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .tab-button {
+    padding: 12px 20px;
+    font-size: 1rem;
+  }
+  
+  .card-header {
+    font-size: 1.3rem;
+    padding: 15px;
+  }
+  
+  .list-group-item {
+    padding: 15px 20px;
+    font-size: 1.1rem;
+  }
+}
+</style>
+
+
+<div class="leaderboard-container">
+  <h2 class="text-center mb-4" style="font-size: 2.5rem; color: #ff8c00; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); margin-bottom: 2rem;">🏆 Global Leaderboard</h2>
+
+<div class="tabs">
+  <button class="tab-button active" data-tab="level">Account Level</button>
+  <button class="tab-button" data-tab="lessons">Lessons</button>
+  <button class="tab-button" data-tab="coins">Coins</button>
+</div>
+
+
+  <!-- Lesson Dropdown -->
+  <div id="lessonSelector" class="lesson-dropdown">
+    <label for="lessonSelect">Select Lesson:</label>
+    <select id="lessonSelect">
+      <option value="tagalog">Tagalog</option>
+      <option value="waray">Waray</option>
+      <option value="cebuano">Cebuano</option>
+    </select>
+  </div>
+
+  <!-- Account Level Section -->
+<div id="levelLeaderboard">
+  <div class="card mb-4">
+    <div class="card-header">
+      🧠 Top Users by Account Level
+    </div>
+    <ul class="list-group list-group-flush">
+      {% for user in top_by_level %}
+      <li class="list-group-item">
+        <span>{{ loop.index }}. {{ user['username'] }}</span>
+        <span>Lvl {{ user['account_level'] }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<div id="lessonLeaderboards" class="hidden">
+  <!-- Lessons Section -->
+  <div id="lessonLeaderboards">
+    {% for lesson, users in lesson_leaderboards.items() %}
+    <div class="lesson-card lesson-{{ lesson }} card mb-4">
+      <div class="card-header">
+        Top Learners - {{ lesson.capitalize() }}
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for user in users %}
+        <li class="list-group-item">
+          <span>{{ loop.index }}. {{ user['users']['username'] }}</span>
+          <span>Level {{ user['highest_unlocked'] }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div id="coinsLeaderboard" class="hidden">
+  <!-- Coins Section -->
+  <div class="card">
+    <div class="card-header">
+      💰 Top Users by Coins
+    </div>
+    <ul class="list-group list-group-flush">
+      {% for user in top_by_coins %}
+      <li class="list-group-item">
+        <span>{{ loop.index }}. {{ user['username'] }}</span>
+        <span>{{ user['coins'] }} coins</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+</div>
+<script>
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const levelSection = document.getElementById('levelLeaderboard');
+  const lessonSection = document.getElementById('lessonLeaderboards');
+  const coinSection = document.getElementById('coinsLeaderboard');
+  const lessonSelector = document.getElementById('lessonSelector');
+  const lessonSelect = document.getElementById('lessonSelect');
+
+  function switchTab(tab) {
+    levelSection.classList.add('hidden');
+    lessonSection.classList.add('hidden');
+    coinSection.classList.add('hidden');
+    lessonSelector.classList.add('hidden');
+
+    if (tab === 'level') levelSection.classList.remove('hidden');
+    if (tab === 'lessons') {
+      lessonSection.classList.remove('hidden');
+      lessonSelector.classList.remove('hidden');
+    }
+    if (tab === 'coins') coinSection.classList.remove('hidden');
+  }
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      switchTab(button.dataset.tab);
+    });
+  });
+
+  // Set default to "Account Level"
+  window.addEventListener('DOMContentLoaded', () => {
+    switchTab('level');
+    showOnlySelectedLesson();
+  });
+
+  // Show only selected lesson
+  function showOnlySelectedLesson() {
+    const selected = lessonSelect.value;
+    document.querySelectorAll('.lesson-card').forEach(card => {
+      card.classList.add('hidden');
+    });
+    const selectedCard = document.querySelector(`.lesson-${selected}`);
+    if (selectedCard) selectedCard.classList.remove('hidden');
+  }
+
+  lessonSelect.addEventListener('change', showOnlySelectedLesson);
+</script>

@@ -1,0 +1,12 @@
+{% extends 'admin_layout.html' %}
+{% block content %}
+<h2>Edit: {{ filename }}</h2>
+
+<form method="POST">
+  <div class="mb-3">
+    <textarea name="content" rows="20" class="form-control" required>{{ content }}</textarea>
+  </div>
+  <button class="btn btn-success" type="submit">💾 Save</button>
+  <a href="{{ url_for('admin.manage_lessons') }}" class="btn btn-secondary">← Back</a>
+</form>
+{% endblock %}

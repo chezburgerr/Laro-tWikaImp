@@ -1,0 +1,84 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Edit Distractor</h1>
+        <a href="{{ url_for('admin.manage_distractors') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Distractors
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="level" class="form-label">Level *</label>
+                            <input type="number" class="form-control" id="level" name="level" 
+                                   required min="1" value="{{ distractor.level }}">
+                            <div class="form-text">The level this distractor belongs to</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="itemnum" class="form-label">Item Number *</label>
+                            <input type="number" class="form-control" id="itemnum" name="itemnum" 
+                                   required min="1" value="{{ distractor.itemnum }}">
+                            <div class="form-text">The item number this distractor corresponds to</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="english" class="form-label">English</label>
+                            <textarea class="form-control" id="english" name="english" rows="3" 
+                                      placeholder="Enter English distractor text">{{ distractor.english or '' }}</textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="tagalog" class="form-label">Tagalog</label>
+                            <textarea class="form-control" id="tagalog" name="tagalog" rows="3" 
+                                      placeholder="Enter Tagalog distractor text">{{ distractor.tagalog or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="waray" class="form-label">Waray</label>
+                            <textarea class="form-control" id="waray" name="waray" rows="3" 
+                                      placeholder="Enter Waray distractor text">{{ distractor.waray or '' }}</textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="cebuano" class="form-label">Cebuano</label>
+                            <textarea class="form-control" id="cebuano" name="cebuano" rows="3" 
+                                      placeholder="Enter Cebuano distractor text">{{ distractor.cebuano or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note:</strong> A distractor must correspond to an existing question. 
+                    Make sure the question exists before saving changes.
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('admin.manage_distractors') }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Distractor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,1621 @@
+
+<div class="level-wrapper" data-lesson="{{ selected_lesson }}">
+
+  <div id="lifeTimer" style="margin-bottom: 10px; font-weight: bold; color: red;"></div>
+  
+  <div class="level-container" id="levelContainer"></div>
+  <div class="nav-buttons" id="navButtons">
+    <button id="prevBtn" disabled>Previous</button>
+    <button id="nextBtn">Next</button>
+  </div>
+</div>
+
+
+<!-- 📘 Lesson Content Modal -->
+<div id="lessonModal" class="lesson-modal">
+  <div class="lesson-modal-content">
+    <div class="lesson-modal-header">
+      <h2 class="lesson-modal-title">📚 Lesson Content</h2>
+      <button onclick="closeModal()" class="lesson-modal-close">✖</button>
+    </div>
+    
+    <div class="lesson-modal-body">
+      <div class="lesson-section-counter" id="sectionCounter"></div>
+      <div class="lesson-content-wrapper">
+        <pre id="lessonContent" class="lesson-content-text"></pre>
+      </div>
+    </div>
+    
+    <div class="lesson-modal-footer">
+      <div class="lesson-navigation">
+        <button id="prevSection" class="lesson-nav-btn" disabled>
+          <span class="nav-icon">⬅</span> Previous
+        </button>
+        <button id="nextSection" class="lesson-nav-btn">
+          Next <span class="nav-icon">➡</span>
+        </button>
+      </div>
+      <button id="proceedToQuizBtn" class="lesson-proceed-btn">
+        <span class="proceed-icon">✅</span> Proceed to Quiz
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 🎉 Level Up Notification Modal -->
+<div id="levelUpModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index:10000;">
+  <div class="level-up-container">
+    <div class="level-up-header">
+      <div class="level-up-icon">🎉</div>
+      <h1 class="level-up-title">Level Up!</h1>
+      <p class="level-up-subtitle">Congratulations! You've reached a new milestone!</p>
+    </div>
+    
+    <div class="level-up-content">
+      <div class="level-info">
+        <div class="new-level">Level <span id="newLevelDisplay">0</span></div>
+        <div class="exp-bar-container">
+          <div class="exp-bar">
+            <div class="exp-bar-fill" id="expBarFill"></div>
+          </div>
+          <div class="exp-text" id="expText">0 / 0 EXP</div>
+        </div>
+      </div>
+      
+      <div class="rewards-section">
+        <h3>🎁 Rewards Earned</h3>
+        <div class="reward-item coin-reward">
+          <span class="reward-icon">🪙</span>
+          <span class="reward-text">+<span id="coinReward">0</span> Coins</span>
+        </div>
+      </div>
+      
+      <div class="unlocked-items-section" id="unlockedItemsSection" style="display:none;">
+        <h3>🔓 New Items Unlocked</h3>
+        <div class="unlocked-items-grid" id="unlockedItemsGrid"></div>
+      </div>
+    </div>
+    
+    <div class="level-up-footer">
+      <button class="continue-btn" onclick="closeLevelUpModal()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🔊 Level Up Sound Effect -->
+<audio id="levelup-sound" src="{{ url_for('static', filename='sounds/levelup.mp3') }}" preload="auto"></audio>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap');
+
+body {
+  font-family: 'Fredoka', Arial, sans-serif;
+}
+
+.level-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #eaf2ff, #ffebee);
+  border-radius: 24px;
+  padding: 2rem;
+  width: 1000px;
+  margin: 2rem auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border: 4px dashed #90caf9;
+  position: relative;
+  overflow: hidden;
+  /* Prevent scrollbar jumping */
+  min-height: 600px;
+}
+
+.level-wrapper::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 179, 71, 0.1) 0%, transparent 70%);
+  animation: float 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+#lifeTimer {
+  margin-bottom: 15px;
+  font-weight: 600;
+  color: #e74c3c;
+  font-size: 1.3rem;
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+  background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+  padding: 10px 20px;
+  border-radius: 25px;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+  border: 2px solid #fff;
+}
+
+.level-container {
+  margin-top: 2rem;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 25px;
+  justify-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 60px 40px 80px 40px; /* Increased top and bottom padding */
+  border-radius: 24px;
+  box-shadow: 
+    inset 0 0 20px rgba(100, 181, 246, 0.15),
+    0 8px 25px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px; /* Increased margin-bottom */
+  overflow: visible; /* Ensure nothing is cropped */
+  transition: all 0.4s ease-in-out;
+  border: 3px solid #90caf9;
+  position: relative;
+  min-height: 500px; /* Ensure enough height for all rows */
+}
+
+.level-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(25, 118, 210, 0.06) 50%, transparent 70%);
+  pointer-events: none;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+}
+
+.level {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #bbdefb, #90caf9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 28px;
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.15),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  position: relative;
+  border: 5px solid #64b5f6;
+  user-select: none;
+  color: #444;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.level::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #b71c1c, #e53935, #b71c1c);
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.level:hover:not(.locked)::before {
+  opacity: 1;
+}
+
+.level:hover:not(.locked) {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 
+    0 12px 30px rgba(0, 0, 0, 0.25),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  border-color: #e53935;
+  /* Prevent layout shift */
+  z-index: 10;
+}
+
+.level.locked {
+  background: linear-gradient(135deg, #e0e0e0, #d0d0d0);
+  color: #999;
+  border: 5px dashed #ccc;
+  cursor: not-allowed;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.level.locked::after {
+  content: "🔒";
+  position: absolute;
+  font-size: 24px;
+  color: #666;
+  bottom: 10px;
+  filter: drop-shadow(1px 1px 2px rgba(255, 255, 255, 0.8));
+}
+
+.nav-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  margin-top: 10px;
+}
+
+.nav-buttons button {
+  padding: 15px 30px;
+  font-size: 1.1rem;
+  border: none;
+  background: linear-gradient(135deg, #ff6f61, #ff8e8e);
+  color: white;
+  border-radius: 25px;
+  font-weight: 600;
+  box-shadow: 
+    0 6px 20px rgba(255, 111, 97, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  border: 3px solid #fff;
+}
+
+.nav-buttons button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.nav-buttons button:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.nav-buttons button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e74c3c, #ff6f61);
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(231, 76, 60, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  /* Prevent layout shift */
+  z-index: 5;
+}
+
+.nav-buttons button:disabled {
+  background: linear-gradient(135deg, #ccc, #ddd);
+  cursor: not-allowed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  .level-wrapper {
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .level-container {
+    grid-template-columns: repeat(2, 120px);
+    overflow-y: auto;
+  }
+
+  .level:nth-child(odd) {
+    justify-self: start;
+  }
+
+  .level:nth-child(even) {
+    justify-self: end;
+  }
+
+  .nav-buttons {
+    display: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .level-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .level {
+    margin: 0 auto;
+  }
+}
+
+.level-container.fade-out {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: all 0.3s ease;
+}
+
+.level-container.fade-in {
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 0.3s ease;
+}
+
+.level.boss-level {
+  background: linear-gradient(135deg, #d63031, #e74c3c);
+  color: #fff;
+  border: 5px solid #c0392b;
+  font-size: 36px;
+  box-shadow: 
+    0 10px 25px rgba(214, 48, 49, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  position: relative;
+  animation: bossPulse 2s ease-in-out infinite;
+}
+
+@keyframes bossPulse {
+  0%, 100% { 
+    box-shadow: 
+      0 10px 25px rgba(214, 48, 49, 0.4),
+      inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  }
+  50% { 
+    box-shadow: 
+      0 15px 35px rgba(214, 48, 49, 0.6),
+      inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  }
+}
+
+.level.boss-level::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(45deg, #d63031, #e74c3c, #c0392b, #d63031);
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: bossGlow 3s ease-in-out infinite;
+}
+
+@keyframes bossGlow {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.8; }
+}
+
+.level.boss-level:hover:not(.locked)::before {
+  opacity: 1;
+}
+
+.level.boss-level:hover:not(.locked) {
+  transform: scale(1.2) rotate(-5deg);
+  box-shadow: 
+    0 15px 40px rgba(214, 48, 49, 0.6),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  border-color: #e74c3c;
+  animation: bossHover 0.5s ease-in-out;
+  /* Prevent layout shift */
+  z-index: 15;
+}
+
+@keyframes bossHover {
+  0% { transform: scale(1.2) rotate(-5deg); }
+  50% { transform: scale(1.25) rotate(-8deg); }
+  100% { transform: scale(1.2) rotate(-5deg); }
+}
+
+.level.boss-level::after {
+  content: "BOSS";
+  position: absolute;
+  bottom: -25px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #d63031;
+  background: linear-gradient(135deg, #fff, #f8f9fa);
+  padding: 4px 12px;
+  border-radius: 15px;
+  box-shadow: 
+    0 4px 12px rgba(0,0,0,0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  border: 2px solid #d63031;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+  letter-spacing: 1px;
+}
+
+.level.boss-level.locked {
+  background: linear-gradient(135deg, #e0e0e0, #d0d0d0);
+  color: #999;
+  border: 5px dashed #ccc;
+  cursor: not-allowed;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  animation: none;
+}
+
+.level.boss-level.locked::before {
+  display: none;
+}
+
+.level.boss-level.locked::after {
+  content: "🔒";
+  position: absolute;
+  font-size: 24px;
+  color: #666;
+  bottom: 10px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  filter: drop-shadow(1px 1px 2px rgba(255, 255, 255, 0.8));
+}
+
+/* Mastery Gauge Styles */
+.mastery-gauge {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mastery-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #4caf50 0deg,
+    #4caf50 calc(var(--mastery-percent) * 3.6deg),
+    #e0e0e0 calc(var(--mastery-percent) * 3.6deg),
+    #e0e0e0 360deg
+  );
+  mask: radial-gradient(circle, transparent 45px, black 46px);
+  -webkit-mask: radial-gradient(circle, transparent 45px, black 46px);
+  animation: gaugePulse 2s ease-in-out infinite;
+}
+
+@keyframes gaugePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.mastery-progress {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(76, 175, 80, 0.3) 0deg,
+    rgba(76, 175, 80, 0.3) calc(var(--mastery-percent) * 3.6deg),
+    transparent calc(var(--mastery-percent) * 3.6deg),
+    transparent 360deg
+  );
+  filter: blur(2px);
+  z-index: -1;
+}
+
+.level-button {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #bbdefb, #90caf9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 28px;
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.15),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  position: relative;
+  border: 5px solid #64b5f6;
+  user-select: none;
+  color: #444;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+  z-index: 2;
+}
+
+.level-button::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #b71c1c, #e53935, #b71c1c);
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.level-button:hover:not(.locked)::before {
+  opacity: 1;
+}
+
+.level-button:hover:not(.locked) {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 
+    0 12px 30px rgba(0, 0, 0, 0.25),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  border-color: #e53935;
+  z-index: 10;
+}
+
+.level-button.locked {
+  background: linear-gradient(135deg, #e0e0e0, #d0d0d0);
+  color: #999;
+  border: 5px dashed #ccc;
+  cursor: not-allowed;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.level-button.locked::after {
+  content: "🔒";
+  position: absolute;
+  font-size: 24px;
+  color: #666;
+  bottom: 10px;
+  filter: drop-shadow(1px 1px 2px rgba(255, 255, 255, 0.8));
+}
+
+/* Mastered state */
+.mastery-gauge.mastered .mastery-ring {
+  background: conic-gradient(
+    from 0deg,
+    #1e88e5 0deg,
+    #1e88e5 360deg
+  );
+  animation: masteryGlow 2s ease-in-out infinite;
+}
+
+@keyframes masteryGlow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(30, 136, 229, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(30, 136, 229, 0.6);
+  }
+}
+
+.level-button.mastered {
+  background: linear-gradient(135deg, #1e88e5, #64b5f6);
+  border: 5px solid #1565c0;
+  box-shadow: 
+    0 8px 20px rgba(30, 136, 229, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  animation: masteryButtonGlow 2s ease-in-out infinite;
+}
+
+@keyframes masteryButtonGlow {
+  0%, 100% { 
+    box-shadow: 
+      0 8px 20px rgba(30, 136, 229, 0.3),
+      inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  }
+  50% { 
+    box-shadow: 
+      0 12px 30px rgba(30, 136, 229, 0.5),
+      inset 0 2px 4px rgba(255, 255, 255, 0.6);
+  }
+}
+
+.mastery-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 20px;
+  color: #1e88e5;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  animation: starTwinkle 1.5s ease-in-out infinite;
+}
+
+@keyframes starTwinkle {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.2) rotate(180deg); }
+}
+
+.level-button.mastered:hover:not(.locked) {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 
+    0 15px 35px rgba(30, 136, 229, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.5);
+  border-color: #1565c0;
+}
+
+/* In progress state */
+.mastery-gauge.in-progress .mastery-ring {
+  animation: progressPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes progressPulse {
+  0%, 100% { 
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 25px rgba(76, 175, 80, 0.5);
+  }
+}
+
+#sectionCounter {
+  background: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  font-size: 0.9rem;
+}
+
+/* Level Up Modal Styles */
+.level-up-container {
+  background: linear-gradient(135deg, #fff8dc, #ffe4e1);
+  border-radius: 24px;
+  padding: 40px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 4px solid #90caf9;
+  position: relative;
+  animation: levelUpSlideIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes levelUpSlideIn {
+  0% {
+    transform: scale(0.5) translateY(-50px);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.level-up-header {
+  margin-bottom: 30px;
+}
+
+.level-up-icon {
+  font-size: 4rem;
+  margin-bottom: 10px;
+  animation: levelUpBounce 2s ease-in-out infinite;
+}
+
+@keyframes levelUpBounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.level-up-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #8b4513;
+  margin: 10px 0;
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+}
+
+.level-up-subtitle {
+  font-size: 1.2rem;
+  color: #666;
+  margin: 0;
+}
+
+.level-up-content {
+  margin-bottom: 30px;
+}
+
+.level-info {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 2px solid #ffd700;
+}
+
+.new-level {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #8b4513;
+  margin-bottom: 15px;
+}
+
+.exp-bar-container {
+  position: relative;
+  margin-top: 15px;
+}
+
+.exp-bar {
+  width: 100%;
+  height: 20px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid #ffd54f;
+  position: relative;
+}
+
+.exp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffc107, #ff9800);
+  border-radius: 8px;
+  width: 0%;
+  transition: width 2s ease-in-out;
+  position: relative;
+}
+
+.exp-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: expBarShine 2s ease-in-out infinite;
+}
+
+@keyframes expBarShine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.exp-text {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  top: -25px;
+  color: #333;
+}
+
+.rewards-section {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 2px solid #4caf50;
+}
+
+.rewards-section h3 {
+  color: #2e7d32;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+}
+
+.reward-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 10px;
+  margin: 10px 0;
+}
+
+.coin-reward {
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  color: #0d47a1;
+  border: 2px solid #64b5f6;
+  animation: coinGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes coinGlow {
+  0% {
+    box-shadow: 0 0 10px rgba(25,118,210,0.4), 0 0 20px rgba(25,118,210,0.3), 0 0 30px rgba(25,118,210,0.2);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(25,118,210,0.5), 0 0 30px rgba(25,118,210,0.35), 0 0 45px rgba(25,118,210,0.25);
+  }
+}
+
+.reward-icon {
+  font-size: 1.5rem;
+}
+
+.unlocked-items-section {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 2px solid #2196f3;
+}
+
+.unlocked-items-section h3 {
+  color: #1565c0;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+}
+
+.unlocked-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.unlocked-item {
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border: 2px solid #2196f3;
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+  animation: itemUnlock 0.8s ease-out;
+}
+
+@keyframes itemUnlock {
+  0% {
+    transform: scale(0) rotate(180deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.unlocked-item img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+.unlocked-item-name {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #1565c0;
+  margin-bottom: 5px;
+}
+
+.unlocked-item-price {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.level-up-footer {
+  text-align: center;
+}
+
+.continue-btn {
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 15px 40px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+}
+
+.continue-btn:hover {
+  background: linear-gradient(135deg, #388e3c, #4caf50);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+}
+
+
+
+/* 📚 Lesson Content Modal Styles */
+.lesson-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+}
+
+.lesson-modal-content {
+  background: linear-gradient(135deg, #fff8dc, #fff3cd);
+  border-radius: 20px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 85%;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 0 0 4px #90caf9,
+    0 0 0 8px rgba(144, 202, 249, 0.3);
+  border: 3px solid #64b5f6;
+  animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modalSlideIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-50px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.lesson-modal-header {
+  background: linear-gradient(135deg, #b71c1c, #e53935);
+  padding: 20px 30px;
+  border-bottom: 3px solid #c62828;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.lesson-modal-header::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #1e88e5, #bbdefb, #1e88e5);
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.lesson-modal-title {
+  color: #fff;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lesson-modal-close {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lesson-modal-close:hover {
+  background: linear-gradient(135deg, #c0392b, #a93226);
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+}
+
+.lesson-modal-body {
+  padding: 30px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.lesson-section-counter {
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: #ff8c00;
+  font-size: 1.1rem;
+  padding: 10px;
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  border-radius: 15px;
+  border: 2px dashed #ffb347;
+  box-shadow: 0 2px 10px rgba(255, 179, 71, 0.2);
+}
+
+.lesson-content-wrapper {
+  background: #fafafa;
+  border-radius: 15px;
+  padding: 25px;
+  border: 2px solid #e0e0e0;
+  box-shadow: 
+    inset 0 2px 10px rgba(0, 0, 0, 0.05),
+    0 4px 15px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.lesson-content-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #4caf50, #8bc34a, #4caf50);
+  border-radius: 15px 15px 0 0;
+}
+
+.lesson-content-text {
+  white-space: pre-wrap;
+  font-family: 'Fredoka', Arial, sans-serif;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #333;
+  margin: 0;
+  text-align: justify;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  width: 100%;
+  min-height: 200px;
+}
+
+.lesson-modal-footer {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  padding: 25px 30px;
+  border-top: 3px solid #ffb347;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.lesson-navigation {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.lesson-nav-btn {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 12px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.lesson-nav-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a6268, #495057);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+}
+
+.lesson-nav-btn:disabled {
+  background: linear-gradient(135deg, #adb5bd, #6c757d);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.nav-icon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.lesson-nav-btn:hover:not(:disabled) .nav-icon {
+  transform: scale(1.2);
+}
+
+.lesson-proceed-btn {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 15px 30px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.lesson-proceed-btn:hover {
+  background: linear-gradient(135deg, #20c997, #17a2b8);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+}
+
+.proceed-icon {
+  font-size: 1.3rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .lesson-modal-content {
+    width: 95%;
+    max-height: 90%;
+  }
+  
+  .lesson-modal-header {
+    padding: 15px 20px;
+  }
+  
+  .lesson-modal-title {
+    font-size: 1.4rem;
+  }
+  
+  .lesson-modal-body {
+    padding: 20px;
+    max-height: 50vh;
+  }
+  
+  .lesson-content-text {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  .lesson-modal-footer {
+    padding: 20px;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .lesson-navigation {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .lesson-proceed-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+</style>
+
+
+<script>
+const levelContainer = document.getElementById('levelContainer');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const navButtons = document.getElementById('navButtons');
+const lifeTimerEl = document.getElementById("lifeTimer");
+const lesson = document.querySelector('.level-wrapper').dataset.lesson;
+
+const totalLevels = 100;
+const levelsPerPage = 10;
+const totalPages = Math.ceil(totalLevels / levelsPerPage);
+let currentPage = 1;
+
+function isSmallScreen() {
+  return window.innerWidth <= 768;
+}
+
+async function fetchUnlockedLevel() {
+  const res = await fetch(`/api/unlocked_level?lesson=${lesson}`);
+  const data = await res.json();
+  return {
+    highest_unlocked: data.highest_unlocked,
+    level_mastery: data.level_mastery || {}
+  };
+}
+
+async function renderLevels(page = 1) {
+  levelContainer.innerHTML = '';
+  const progressData = await fetchUnlockedLevel();
+  const unlockedLevel = progressData.highest_unlocked;
+  const levelMastery = progressData.level_mastery;
+
+  let start = (page - 1) * levelsPerPage + 1;
+  let end = Math.min(page * levelsPerPage, totalLevels);
+
+  for (let i = start; i <= end; i++) {
+    const level = document.createElement('div');
+    level.classList.add('level');
+    
+    // Create mastery gauge container
+    const masteryGauge = document.createElement('div');
+    masteryGauge.classList.add('mastery-gauge');
+    
+    // Create the level button inside the gauge
+    const levelButton = document.createElement('div');
+    levelButton.classList.add('level-button');
+    levelButton.textContent = i;
+    
+    // Check mastery info
+    const levelKey = i.toString();
+    const masteryInfo = levelMastery[levelKey];
+    const isMastered = masteryInfo && masteryInfo.mastered;
+    const bestScore = masteryInfo ? masteryInfo.best_score : 0;
+    const attempts = masteryInfo ? masteryInfo.attempts : 0;
+    
+    // Calculate mastery percentage for gauge
+    const masteryPercent = Math.min(100, bestScore);
+    
+    if (i > unlockedLevel) {
+      level.classList.add('locked');
+      levelButton.classList.add('locked');
+      levelButton.title = `Level ${i} - Complete previous level to unlock`;
+    } else {
+      // Add mastery indicator and tooltip
+      if (isMastered) {
+        level.classList.add('mastered');
+        levelButton.classList.add('mastered');
+        levelButton.innerHTML = `${i}<br><span class="mastery-badge">⭐</span>`;
+        levelButton.title = `Level ${i} - Mastered! Best: ${Math.round(bestScore)}% (${attempts} attempts)`;
+        masteryGauge.classList.add('mastered');
+      } else {
+        levelButton.title = `Level ${i} - Best: ${Math.round(bestScore)}% (${attempts} attempts)`;
+        if (bestScore > 0) {
+          masteryGauge.classList.add('in-progress');
+        }
+      }
+      
+      levelButton.addEventListener('click', () => {
+        selectedLevel = i; // 🔥 Save selected level
+        fetch(`/api/lesson-content?lesson=${lesson}&level=${i}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              // Split content by ------ separator
+              lessonSections = data.content.split('------').map(section => section.trim()).filter(section => section.length > 0);
+              currentSection = 0;
+              if (lessonSections.length > 0) {
+                showSection(0);
+                document.getElementById('lessonModal').style.display = 'flex';
+              } else {
+                alert('❌ No lesson content found.');
+              }
+            } else {
+              alert('❌ Failed to load lesson content.');
+            }
+          })
+          .catch(err => {
+            console.error("Fetch error:", err);
+            alert("⚠️ Error loading lesson.");
+          });
+      });
+    }
+    
+    // Add mastery gauge elements
+    masteryGauge.innerHTML = `
+      <div class="mastery-ring" style="--mastery-percent: ${masteryPercent}%"></div>
+      <div class="mastery-progress" style="--mastery-percent: ${masteryPercent}%"></div>
+    `;
+    
+    // Assemble the level with gauge
+    masteryGauge.appendChild(levelButton);
+    level.appendChild(masteryGauge);
+    levelContainer.appendChild(level);
+  }
+
+  // 🔥 Insert BOSS LEVEL at the center after 10 quiz levels
+// 🔥 Insert BOSS LEVEL at the center after 10 quiz levels
+const bossLevel = document.createElement('div');
+bossLevel.classList.add('level', 'boss-level');
+bossLevel.innerHTML = '👹';
+bossLevel.title = 'Boss Battle';
+
+// ✅ Check if boss should be unlocked (only if all 10 quiz levels are unlocked)
+const bossUnlocked = unlockedLevel >= end;
+if (!bossUnlocked) {
+  bossLevel.classList.add('locked');
+} else {
+bossLevel.addEventListener('click', () => {
+  const bossLevelNum = page; // or calculate from level numbers, e.g. page === 1 -> boss 1
+  window.location.href = `/combat/combat.html?boss=${bossLevelNum}`;
+});
+
+}
+
+// ✅ Center the boss level in the grid
+if (!isSmallScreen()) {
+  bossLevel.style.gridColumn = "3 / span 1";
+} else {
+  bossLevel.style.gridColumn = "1 / span 2";
+}
+
+levelContainer.appendChild(bossLevel);
+
+
+
+  levelContainer.appendChild(bossLevel);
+
+  if (isSmallScreen()) {
+    navButtons.style.display = 'none';
+  } else {
+    navButtons.style.display = 'flex';
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages;
+  }
+}
+
+
+prevBtn.addEventListener('click', () => {
+  if (currentPage > 1) {
+    currentPage--;
+    renderLevels(currentPage);
+  }
+});
+
+nextBtn.addEventListener('click', () => {
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderLevels(currentPage);
+  }
+});
+
+window.addEventListener('resize', () => {
+  renderLevels(currentPage);
+});
+
+function startLifeCountdown() {
+  fetch('/api/regenerate-lives')
+    .then(res => res.json())
+    .then(data => {
+      const { lives, next_life_in } = data;
+      if (lives < 5 && next_life_in != null) {
+        updateCountdown(next_life_in, lives);
+      } else {
+        displayLives(lives);
+      }
+    });
+}
+
+function displayLives(lives) {
+  const hearts = '❤️'.repeat(lives);
+  const emptyHearts = '🤍'.repeat(5 - lives);
+  lifeTimerEl.innerHTML = `
+    <span style="font-size: 1.5rem; margin-right: 10px;">${hearts}${emptyHearts}</span>
+    <span style="font-size: 1.1rem;">Lives: ${lives}/5</span>
+  `;
+}
+
+function updateCountdown(seconds, currentLives) {
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = Math.floor(sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  let remaining = seconds;
+  const interval = setInterval(() => {
+    if (remaining <= 0) {
+      clearInterval(interval);
+      startLifeCountdown();
+    } else {
+      const hearts = '❤️'.repeat(currentLives);
+      const emptyHearts = '🤍'.repeat(5 - currentLives);
+      lifeTimerEl.innerHTML = `
+        <span style="font-size: 1.5rem; margin-right: 10px;">${hearts}${emptyHearts}</span>
+        <span style="font-size: 1.1rem;">Regenerating in ${formatTime(remaining)}</span>
+      `;
+      remaining--;
+    }
+  }, 1000);
+}
+
+startLifeCountdown();
+setInterval(startLifeCountdown, 10000);
+renderLevels(currentPage);
+
+function closeModal() {
+  document.getElementById('lessonModal').style.display = 'none';
+  // Reset section state
+  lessonSections = [];
+  currentSection = 0;
+  document.getElementById('sectionCounter').textContent = '';
+}
+
+
+let lessonSections = [];
+let currentSection = 0;
+
+function showSection(index) {
+  const content = lessonSections[index];
+  document.getElementById('lessonContent').textContent = content;
+
+  // Update button states
+  document.getElementById('prevSection').disabled = index === 0;
+  document.getElementById('nextSection').disabled = index === lessonSections.length - 1;
+  
+  // Update section counter if it exists
+  const sectionCounter = document.getElementById('sectionCounter');
+  if (sectionCounter) {
+    sectionCounter.textContent = `Section ${index + 1} of ${lessonSections.length}`;
+  }
+}
+
+document.getElementById('prevSection').addEventListener('click', () => {
+  if (currentSection > 0) {
+    currentSection--;
+    showSection(currentSection);
+  }
+});
+
+document.getElementById('nextSection').addEventListener('click', () => {
+  if (currentSection < lessonSections.length - 1) {
+    currentSection++;
+    showSection(currentSection);
+  }
+});
+
+// 🔁 Modify the fetch call inside renderLevels():
+
+
+let selectedLevel = 1; // default
+
+document.getElementById('proceedToQuizBtn').addEventListener('click', () => {
+  if (lesson && selectedLevel) {
+    // Redirect to your quiz page
+    window.location.href = `/level?lesson=${lesson}&level=${selectedLevel}`;
+  }
+});
+
+// Level Up Notification System
+let lastKnownLevel = parseInt(localStorage.getItem('lastKnownLevel')) || 1;
+
+// Check for level up on page load
+async function checkForLevelUp() {
+  try {
+    const response = await fetch('/api/dashboard-stats');
+    const data = await response.json();
+    console.log('Dashboard stats:', data); // Debug log
+    const currentLevel = data.user_stats.account_level;
+    
+    if (currentLevel > lastKnownLevel) {
+      console.log(`Level up detected! From ${lastKnownLevel} to ${currentLevel}`); // Debug log
+      showLevelUpNotification(currentLevel, data.user_stats);
+    }
+    
+    lastKnownLevel = currentLevel;
+    localStorage.setItem('lastKnownLevel', currentLevel.toString());
+  } catch (error) {
+    console.error('Error checking for level up:', error);
+  }
+}
+
+async function showLevelUpNotification(newLevel, userStats) {
+  try {
+    // Get items that unlock at this level
+    const itemsResponse = await fetch(`/api/items-by-level/${newLevel}`);
+    const itemsData = await itemsResponse.json();
+    const unlockedItems = itemsData.success ? itemsData.items : [];
+    
+    console.log('Unlocked items:', unlockedItems); // Debug log
+    
+    // Calculate coin reward for this level
+    const coinReward = Math.round(50 * Math.pow(1.2, newLevel - 1));
+    
+    // Update modal content
+    document.getElementById('newLevelDisplay').textContent = newLevel;
+    document.getElementById('coinReward').textContent = coinReward;
+    
+    // Update EXP bar with proper data validation
+    if (userStats.current_exp !== undefined && userStats.required_exp !== undefined) {
+      const expPercent = Math.min(100, Math.round((userStats.current_exp / userStats.required_exp) * 100));
+      document.getElementById('expText').textContent = `${Math.round(userStats.current_exp)} / ${Math.round(userStats.required_exp)} EXP`;
+      
+      // Animate EXP bar fill
+      setTimeout(() => {
+        document.getElementById('expBarFill').style.width = `${expPercent}%`;
+      }, 500);
+    } else {
+      console.error('Missing EXP data:', userStats);
+      document.getElementById('expText').textContent = 'EXP data unavailable';
+    }
+  
+    // Show unlocked items if any
+    const unlockedItemsSection = document.getElementById('unlockedItemsSection');
+    const unlockedItemsGrid = document.getElementById('unlockedItemsGrid');
+    
+    if (unlockedItems.length > 0) {
+      unlockedItemsSection.style.display = 'block';
+      unlockedItemsGrid.innerHTML = '';
+      
+      unlockedItems.forEach((item, index) => {
+        const itemElement = document.createElement('div');
+        itemElement.className = 'unlocked-item';
+        itemElement.style.animationDelay = `${index * 0.2}s`;
+        
+        itemElement.innerHTML = `
+          <img src="https://uktdymsgfgodbwesdvsj.supabase.co/storage/v1/object/public/shopitems/${item.filename}" alt="${item.name}">
+          <div class="unlocked-item-name">${item.name}</div>
+          <div class="unlocked-item-price">🪙 ${item.price} coins</div>
+        `;
+        
+        unlockedItemsGrid.appendChild(itemElement);
+      });
+    } else {
+      unlockedItemsSection.style.display = 'none';
+    }
+    
+    // Show modal
+    document.getElementById('levelUpModal').style.display = 'flex';
+    
+    // Play celebration sound if available
+    const celebrationSound = document.getElementById('celebrationSound');
+    if (celebrationSound) {
+      celebrationSound.play().catch(e => console.warn("Autoplay failed:", e));
+    }
+    
+    // 🔊 Play level up sound
+    const levelupSound = document.getElementById('levelup-sound');
+    if (levelupSound) {
+      levelupSound.currentTime = 0;
+      levelupSound.play().catch(e => console.warn("Level up sound autoplay failed:", e));
+    }
+    
+    // Trigger confetti effect
+    if (typeof confetti !== 'undefined') {
+      confetti({
+        particleCount: 200,
+        spread: 100,
+        origin: { y: 0.6 }
+      });
+    }
+  } catch (error) {
+    console.error('Error showing level up notification:', error);
+    // Fallback: show basic notification
+    alert(`🎉 Level Up! You are now level ${newLevel}!`);
+  }
+}
+
+function closeLevelUpModal() {
+  document.getElementById('levelUpModal').style.display = 'none';
+}
+
+// Initialize level up check
+document.addEventListener('DOMContentLoaded', () => {
+  // Load last known level from localStorage
+  lastKnownLevel = parseInt(localStorage.getItem('lastKnownLevel')) || 1;
+  
+  // Check for level up after a short delay to ensure page is loaded
+  setTimeout(checkForLevelUp, 1000);
+  
+  // Also check periodically (every 30 seconds) for level ups from other pages
+  setInterval(checkForLevelUp, 30000);
+});
+
+</script>

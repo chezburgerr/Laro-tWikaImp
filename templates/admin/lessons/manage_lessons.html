@@ -1,0 +1,136 @@
+{% extends 'admin_layout.html' %}
+{% block content %}
+<h2 class="mb-4">📘 Manage Lessons</h2>
+
+<!-- 🔘 Top Controls -->
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+  <div class="d-flex align-items-center">
+    <label for="languageSelect" class="form-label mb-0 me-2 fw-semibold">Select Language:</label>
+    <select id="languageSelect" class="form-select form-select-sm w-auto" onchange="toggleLanguageSection(this.value)">
+      <option value="tagalog" selected>Tagalog</option>
+      <option value="waray">Waray</option>
+      <option value="cebuano">Cebuano</option>
+    </select>
+  </div>
+  <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#uploadLessonModal">➕ Upload New Lesson</button>
+</div>
+
+<!-- 🔼 Upload Lesson Modal -->
+<div class="modal fade" id="uploadLessonModal" tabindex="-1" aria-labelledby="uploadLessonModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <form action="{{ url_for('admin.upload_lesson') }}" method="POST" enctype="multipart/form-data">
+        <div class="modal-header bg-primary text-white py-2 px-3">
+          <h5 class="modal-title" id="uploadLessonModalLabel">Upload New Lesson File</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="lesson_file" class="form-label">Lesson File (.txt)</label>
+            <input class="form-control" type="file" id="lesson_file" name="lesson_file" accept=".txt" required>
+          </div>
+          <p class="text-muted small">
+            Filename must follow:
+            <code>tagalog_lvlX.txt</code>,
+            <code>waray_lvlX.txt</code>,
+            <code>cebuano_lvlX.txt</code>
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary btn-sm">Upload</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 📄 Lesson Sections -->
+{% for lang, files in sections.items() %}
+<div class="lesson-section {% if lang != 'tagalog' %}d-none{% endif %}" id="section-{{ lang }}">
+  <h4 class="mb-3">{{ lang.capitalize() }} Lessons</h4>
+
+  {% if files %}
+  <!-- 🔍 Search & Sort -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap mb-2 gap-2">
+    <input type="text" class="form-control form-control-sm w-50 lesson-search" placeholder="Search lessons..." data-lang="{{ lang }}">
+    <select class="form-select form-select-sm w-auto lesson-sort" data-lang="{{ lang }}">
+      <option value="">Sort by...</option>
+      <option value="filename-asc">Filename A–Z</option>
+      <option value="filename-desc">Filename Z–A</option>
+      <option value="level-asc">Level ↑</option>
+      <option value="level-desc">Level ↓</option>
+    </select>
+  </div>
+
+  <!-- 📊 Lessons Table -->
+  <div class="table-responsive">
+    <table class="table table-sm table-bordered align-middle text-center">
+      <thead class="table-light">
+        <tr>
+          <th>Filename</th>
+          <th>Level</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in files %}
+        <tr class="lesson-row" data-lang="{{ lang }}" data-filename="{{ f.filename | lower }}" data-level="{{ f.level }}">
+          <td>{{ f.filename }}</td>
+          <td>{{ f.level }}</td>
+          <td>
+            <a href="{{ url_for('admin.edit_lesson', lang=lang, level=f.level) }}" class="btn btn-sm btn-primary">Edit</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-muted">No {{ lang }} lessons found.</p>
+  {% endif %}
+</div>
+{% endfor %}
+
+<!-- 💡 Scripts -->
+<script>
+function toggleLanguageSection(lang) {
+  document.querySelectorAll(".lesson-section").forEach(section => section.classList.add("d-none"));
+  document.getElementById("section-" + lang)?.classList.remove("d-none");
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const searchInputs = document.querySelectorAll(".lesson-search");
+  const sortSelects = document.querySelectorAll(".lesson-sort");
+
+  function filterAndSort(lang) {
+    const searchVal = document.querySelector(`.lesson-search[data-lang="${lang}"]`).value.toLowerCase();
+    const sortVal = document.querySelector(`.lesson-sort[data-lang="${lang}"]`).value;
+
+    const rows = document.querySelectorAll(`.lesson-row[data-lang="${lang}"]`);
+    const sortedRows = Array.from(rows).sort((a, b) => {
+      const aFilename = a.dataset.filename;
+      const bFilename = b.dataset.filename;
+      const aLevel = parseInt(a.dataset.level);
+      const bLevel = parseInt(b.dataset.level);
+      switch (sortVal) {
+        case "filename-asc": return aFilename.localeCompare(bFilename);
+        case "filename-desc": return bFilename.localeCompare(aFilename);
+        case "level-asc": return aLevel - bLevel;
+        case "level-desc": return bLevel - aLevel;
+        default: return 0;
+      }
+    });
+
+    sortedRows.forEach(row => {
+      const matchesSearch = row.dataset.filename.includes(searchVal);
+      row.style.display = matchesSearch ? "" : "none";
+      row.parentElement.appendChild(row);
+    });
+  }
+
+  searchInputs.forEach(input => input.addEventListener("input", () => filterAndSort(input.dataset.lang)));
+  sortSelects.forEach(select => select.addEventListener("change", () => filterAndSort(select.dataset.lang)));
+});
+</script>
+{% endblock %}

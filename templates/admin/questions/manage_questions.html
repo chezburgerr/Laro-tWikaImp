@@ -1,0 +1,136 @@
+{% extends 'admin_layout.html' %}
+
+{% block content %}
+<style>
+    /* Custom styles to enhance presentation */
+    .card-header-custom {
+        background-color: #f8f9fa; /* Light background for header */
+        border-bottom: 1px solid rgba(0,0,0,.125); /* Standard card border */
+        font-size: 1.25rem;
+        font-weight: 500;
+        padding: 1rem 1.5rem;
+        color: #343a40;
+    }
+
+    .table-responsive-sm {
+        overflow-x: auto; /* Ensures horizontal scroll on small screens */
+        -webkit-overflow-scrolling: touch; /* Improves scrolling on iOS */
+    }
+
+    /* Adjust search input width for a less intrusive look */
+    #levelSearch {
+        max-width: 250px; /* Limit width to prevent it from dominating the layout */
+    }
+
+    /* Small gap for clarity between action buttons */
+    .action-buttons .btn {
+        margin-right: 0.25rem; /* Small space between buttons */
+    }
+    .action-buttons .btn:last-child {
+        margin-right: 0; /* No margin on the last button */
+    }
+</style>
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">{{ title }}</h2> {# Use h2 for section titles #}
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{{ url_for('admin.add_question') }}" class="btn btn-success">
+            <i class="fas fa-plus-circle me-2"></i> Add New Question {# Font Awesome icon for "add" #}
+        </a>
+
+        <div class="input-group" style="max-width: 300px;"> {# Group search input and button #}
+            <span class="input-group-text"><i class="fas fa-search"></i></span> {# Search icon #}
+            <input type="number" id="levelSearch" class="form-control" placeholder="Filter by level...">
+            <button id="sortBtn" class="btn btn-outline-primary">
+                Sort by Level <i class="fas fa-arrow-up"></i> {# Default arrow up #}
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header card-header-custom">
+            Question List
+        </div>
+        <div class="card-body p-0"> {# p-0 removes default padding to allow table to fill card body #}
+            <div class="table-responsive-sm"> {# Make table responsive for small screens #}
+                <table class="table table-hover table-striped mb-0" id="questionsTable"> {# mb-0 to remove bottom margin #}
+                    <thead class="table-light"> {# Light header background #}
+                        <tr>
+                            <th scope="col">Level</th> {# scope="col" for accessibility #}
+                            <th scope="col">Item No.</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">English</th>
+                            <th scope="col">Tagalog</th>
+                            <th scope="col">Waray</th>
+                            <th scope="col">Cebuano</th>
+                            <th scope="col" class="text-center">Actions</th> {# Center actions column header #}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for q in questions %}
+                        <tr>
+                            <td class="level">{{ q.level }}</td>
+                            <td>{{ q.itemnum }}</td>
+                            <td>{{ q.type }}</td>
+                            <td>{{ q.english }}</td>
+                            <td>{{ q.tagalog }}</td>
+                            <td>{{ q.waray }}</td>
+                            <td>{{ q.cebuano }}</td>
+                            <td class="action-buttons text-center"> {# Center content in actions column #}
+                                <a href="{{ url_for('admin.edit_question', question_id=q.id) }}" class="btn btn-sm btn-info" title="Edit Question">
+                                    <i class="fas fa-edit"></i> {# Edit icon #}
+                                </a>
+                                <form action="{{ url_for('admin.delete_question', question_id=q.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this question? This action cannot be undone.');">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete Question">
+                                        <i class="fas fa-trash-alt"></i> {# Delete icon #}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if not questions %}
+                <div class="text-center py-4 text-muted">
+                    No questions found. Add some new questions to get started!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// 🔍 Real-time filter by level
+document.getElementById("levelSearch").addEventListener("input", function () {
+    const searchValue = this.value.trim();
+    const rows = document.querySelectorAll("#questionsTable tbody tr");
+    rows.forEach(row => {
+        const level = row.querySelector(".level").innerText;
+        // Check if searchValue is empty OR if the level matches the search value exactly
+        row.style.display = (searchValue === "" || level === searchValue) ? "" : "none";
+    });
+});
+
+// 🔃 Sort by level toggle
+let ascending = true;
+document.getElementById("sortBtn").addEventListener("click", function () {
+    const tbody = document.querySelector("#questionsTable tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const sortButton = this; // Reference to the button
+
+    rows.sort((a, b) => {
+        const aLevel = parseInt(a.querySelector(".level").innerText);
+        const bLevel = parseInt(b.querySelector(".level").innerText);
+        return ascending ? aLevel - bLevel : bLevel - aLevel;
+    });
+
+    rows.forEach(row => tbody.appendChild(row)); // Re-append rows in sorted order
+    ascending = !ascending; // Toggle sort order for next click
+
+    // Update button text and icon
+    sortButton.innerHTML = `Sort by Level <i class="fas fa-arrow-${ascending ? "up" : "down"}"></i>`;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'admin_layout.html' %}
+
+{% block content %}
+<h1 class="mb-4">{{ title }}</h1>
+<a href="{{ url_for('admin.add_boss_level') }}" class="btn btn-success mb-3">Add New Boss Level</a>
+
+{% if boss_levels %}
+<div class="table-responsive">
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Boss</th>
+                <th>Item Number</th>
+                <th>Tagalog</th>
+                <th>Waray</th>
+                <th>Cebuano</th>
+                <th>Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bl in boss_levels %}
+            <tr>
+                <td>{{ bl.boss }}</td>
+                <td>{{ bl.itemnum }}</td>
+                <td>{{ bl.tagalog }}</td>
+                <td>{{ bl.waray }}</td>
+                <td>{{ bl.cebuano }}</td>
+                <td>{{ bl.type }}</td>
+                <td>
+                    <a href="{{ url_for('admin.edit_boss_level', boss_level_id=bl.id) }}" class="btn btn-sm btn-info">Edit</a>
+                    <form action="{{ url_for('admin.delete_boss_level', boss_level_id=bl.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this boss level?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p>No boss levels found.</p>
+{% endif %}
+{% endblock %} 

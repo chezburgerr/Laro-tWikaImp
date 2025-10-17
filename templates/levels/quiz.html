@@ -1,0 +1,1058 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/douquiz.css') }}">
+
+<style>
+.streak-display {
+  background: linear-gradient(135deg, #b71c1c, #e53935);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  text-align: center;
+  margin: 10px 0;
+  box-shadow: 0 4px 15px rgba(183, 28, 28, 0.3);
+  border: 2px solid #fff;
+  animation: streakGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes streakGlow {
+  from { box-shadow: 0 4px 15px rgba(183, 28, 28, 0.3); }
+  to { box-shadow: 0 6px 20px rgba(183, 28, 28, 0.5); }
+}
+
+.streak-display.high-streak {
+  background: linear-gradient(135deg, #1565c0, #1e88e5);
+  color: #fff;
+  animation: highStreakGlow 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes highStreakGlow {
+  from { box-shadow: 0 4px 15px rgba(21, 101, 192, 0.4); }
+  to { box-shadow: 0 8px 25px rgba(21, 101, 192, 0.7); }
+}
+
+.skip-feedback-btn {
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+}
+
+.skip-feedback-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+}
+
+.skip-feedback-btn:active {
+  transform: scale(0.95);
+}
+</style>
+
+<div class="quiz-box" id="quizBox" data-level="{{ level }}">
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"><span id="progressText">0%</span></div>
+  </div>
+  <div class="lives" id="lives">❤️❤️❤️❤️❤️</div>
+  <div class="streak-display" id="streakDisplay" style="display: none;">🔥 Streak: <span id="streakCount">0</span></div>
+
+<div class="question-area">
+  <div class="question-number" id="questionNumber">Question 1</div> <!-- ADD THIS -->
+  <div class="question" id="question">Loading...</div>
+  <button class="tts-button" onclick="speakQuestion()">🔊 Play</button>
+</div>
+
+
+  <div class="answer-area" id="answerArea"></div>
+  <div class="word-bank" id="wordBank"></div>
+
+  <div class="controls">
+    <button class="checkbtn" id="checkBtn">Check</button>
+    <p id="feedback" class=""></p>
+    <div id="aiFeedback" class="ai-feedback"></div>
+    <button id="skipFeedbackBtn" class="skip-feedback-btn" style="display: none;">⏭️ Skip Feedback</button>
+  </div>
+</div>
+<div id="popupMessage" class="popup-message"></div>
+
+<audio id="celebrationSound" preload="auto">
+  <source src="{{ url_for('static', filename='sounds/celebration.mp3') }}" type="audio/mpeg">
+</audio>
+
+<audio id="correctSound" preload="auto">
+  <source src="{{ url_for('static', filename='sounds/correct.mp3') }}" type="audio/mpeg">
+</audio>
+
+<audio id="wrongSound" preload="auto">
+  <source src="{{ url_for('static', filename='sounds/wrong.mp3') }}" type="audio/mpeg">
+</audio>
+
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<script>
+let quizData = [];
+let currentIndex = 0;
+let selectedWords = [];
+let lives = typeof userLives !== 'undefined' ? userLives : 5;
+let levelFinished = false;
+let mode = 'check'; // 👈 controls whether we're checking or moving to next
+let correctAnswers = 0;
+let totalQuestions = 0;
+let currentStreak = 0; // 🔥 Add streak tracking
+let maxStreak = 0; // 🔥 Track highest streak in this level
+
+const level = parseInt(document.getElementById("quizBox").dataset.level);
+
+// DOM references
+let questionEl, wordBankEl, answerAreaEl, checkBtn, feedbackEl, aiFeedbackEl, livesEl, quizBoxEl, skipFeedbackBtn;
+
+function assignElements() {
+  quizBoxEl = document.getElementById('quizBox');
+  questionEl = document.getElementById('question');
+  wordBankEl = document.getElementById('wordBank');
+  answerAreaEl = document.getElementById('answerArea');
+  feedbackEl = document.getElementById('feedback');
+  aiFeedbackEl = document.getElementById('aiFeedback');
+  checkBtn = document.getElementById('checkBtn');
+  livesEl = document.getElementById('lives');
+  skipFeedbackBtn = document.getElementById('skipFeedbackBtn');
+}
+
+function updateLivesDisplay() {
+  livesEl.textContent = '❤️'.repeat(lives) + '🖤'.repeat(5 - lives);
+}
+
+function updateStreakDisplay() {
+  const streakDisplay = document.getElementById('streakDisplay');
+  const streakCount = document.getElementById('streakCount');
+  
+  if (currentStreak > 0) {
+    streakDisplay.style.display = 'block';
+    streakCount.textContent = currentStreak;
+    
+    // Add special styling for high streaks (5+)
+    if (currentStreak >= 5) {
+      streakDisplay.classList.add('high-streak');
+    } else {
+      streakDisplay.classList.remove('high-streak');
+    }
+  } else {
+    streakDisplay.style.display = 'none';
+    streakDisplay.classList.remove('high-streak');
+  }
+}
+
+function updateProgressBar() {
+  const progress = ((currentIndex) / quizData.length) * 100;
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+
+  progressBar.style.width = progress + '%';
+  progressText.textContent = Math.round(progress) + '%';
+  progressBar.style.backgroundColor = progress < 40 ? 'red' : progress < 70 ? 'orange' : 'green';
+}
+
+function loadQuestion() {
+  const current = quizData[currentIndex];
+  document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${quizData.length}`;
+  questionEl.textContent = current.question;
+
+  // Show preferred language equivalent for fill-in-the-blank
+  let preferredEqDiv = document.getElementById('preferredEquivalent');
+  if (!preferredEqDiv) {
+    preferredEqDiv = document.createElement('div');
+    preferredEqDiv.id = 'preferredEquivalent';
+    preferredEqDiv.style = 'margin: 8px 0; color: #555; font-size: 1.05em; font-style: italic;';
+    questionEl.parentNode.insertBefore(preferredEqDiv, questionEl.nextSibling);
+  }
+  if (current.type === 'fillblank' && current.preferred_equivalent) {
+    preferredEqDiv.style.display = 'block';
+    preferredEqDiv.textContent = `Equivalent in your preferred language: "${current.preferred_equivalent}"`;
+  } else {
+    preferredEqDiv.style.display = 'none';
+    preferredEqDiv.textContent = '';
+  }
+
+  wordBankEl.innerHTML = '';
+  answerAreaEl.innerHTML = '';
+  feedbackEl.textContent = '';
+  feedbackEl.className = '';
+  aiFeedbackEl.textContent = '';
+  skipFeedbackBtn.style.display = 'none';
+  selectedWords = [];
+  checkBtn.textContent = "Check";
+  checkBtn.disabled = false;
+  mode = 'check';
+
+
+
+  if (current.type === 'input') {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'textAnswer';
+    input.placeholder = 'Type your answer here...';
+    answerAreaEl.appendChild(input);
+  } else if (current.type === 'fillblank' || current.type === 'choice') {
+    shuffle(current.choices).forEach(word => {
+      const btn = document.createElement('button');
+      btn.className = 'word';
+      btn.textContent = word;
+      btn.onclick = () => {
+        if (current.type === 'fillblank' && selectedWords.length >= 1) return;
+        btn.disabled = true;
+        selectedWords.push(word);
+        const selectedBtn = document.createElement('button');
+        selectedBtn.className = 'word';
+        selectedBtn.textContent = word;
+        selectedBtn.onclick = () => {
+          selectedBtn.remove();
+          btn.disabled = false;
+          selectedWords = selectedWords.filter(w => w !== word);
+        };
+        answerAreaEl.appendChild(selectedBtn);
+      };
+      wordBankEl.appendChild(btn);
+    });
+  }
+
+  updateProgressBar();
+}
+
+async function speakQuestion() {
+  const current = quizData[currentIndex];
+
+  // Extract the word from the question (e.g., text inside quotes)
+  let match = current.question.match(/"(.+?)"/);
+  const textToSpeak = current.audio || (match ? match[1] : current.question);
+
+  try {
+    const response = await fetch('/api/google-tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: textToSpeak,
+        language: current.lang || 'id-ID' // or 'war', 'ceb', etc. depending on the current lesson
+      })
+    });
+
+    const data = await response.json();
+    if (data.audio) {
+      const audio = new Audio("data:audio/mp3;base64," + data.audio);
+      audio.play();
+    } else {
+      console.error("TTS Error:", data.error);
+    }
+  } catch (err) {
+    console.error("Failed to call Google TTS API:", err);
+  }
+}
+
+
+
+function showGameOver() {
+  quizBoxEl.innerHTML = `
+    <div class="game-over">💀 Game Over</div>
+    <p>You ran out of lives.</p>
+    <button onclick="goToMainMenu()" class="main-menu-btn">🏠 Main Menu</button>
+    <button onclick="buyFullHealth()" class="buy-health-btn">💖 Buy Full Health (80🪙)</button>
+  `;
+}
+
+async function buyFullHealth() {
+  try {
+    const res = await fetch('/api/buy-full-health', { method: 'POST' });
+    const data = await res.json();
+
+    if (data.success) {
+      lives = 5;
+      renderQuizLayout();
+      updateLivesDisplay();
+      await fetchQuestions();
+    } else {
+      alert(data.message || 'Not enough coins or error occurred.');
+    }
+  } catch (err) {
+    console.error('Failed to buy full health:', err);
+    alert('Error connecting to the server.');
+  }
+}
+
+function goToMainMenu() {
+  window.location.href = "/levelscreen";
+}
+
+function setupCheckButton() {
+  checkBtn.addEventListener('click', async () => {
+    const current = quizData[currentIndex];
+
+if (mode === 'next') {
+  currentIndex++;
+  if (currentIndex < quizData.length) {
+    loadQuestion();
+  } else if (!levelFinished) {
+    levelFinished = true;
+
+    const sound = document.getElementById('celebrationSound');
+    sound.pause();
+    sound.currentTime = 0;
+    sound.play().catch(e => console.warn("Autoplay failed:", e));
+
+    confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
+    quizBoxEl.innerHTML = `<div class="game-over">🎉 Quiz Completed!</div> <br> <br>`;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const lesson = urlParams.get('lesson') || 'tagalog';
+    
+    // Calculate if this was a perfect score
+    const isPerfectScore = correctAnswers === totalQuestions;
+    
+    console.log("🔍 QUIZ DEBUG:", {
+      level: parseInt(level),
+      lesson,
+      perfect_score: isPerfectScore,
+      total_questions: totalQuestions,
+      correct_answers: correctAnswers,
+      perfect_calculation: `${correctAnswers} === ${totalQuestions} = ${correctAnswers === totalQuestions}`,
+      percentage: `${(correctAnswers / totalQuestions * 100).toFixed(1)}%`
+    });
+    
+    fetch('/api/complete_level', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        level: parseInt(level), 
+        lesson,
+        perfect_score: isPerfectScore,
+        total_questions: totalQuestions,
+        correct_answers: correctAnswers
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      console.log("🔍 API RESPONSE:", data);
+      
+      if (data.level_mastered) {
+        showPopupMessage("🎯 Level Mastered! Perfect Score!");
+      } else if (data.can_unlock_next) {
+        showPopupMessage("🔓 Next Level Unlocked! Perfect Score Required!");
+      } else if (isPerfectScore) {
+        showPopupMessage("🎯 Perfect Score! But you need to complete the current highest level to unlock the next.");
+      } else {
+        showPopupMessage("📚 Good job! Get a perfect score to master this level and unlock the next!");
+      }
+    })
+    .catch(err => {
+      console.error("Complete level error:", err);
+      showPopupMessage("⚠️ Error saving progress, but you can continue!");
+    })
+    .finally(() => {
+      // Always add buttons regardless of API success/failure
+      quizBoxEl.innerHTML += `
+        <div style="text-align: center; margin-top: 20px;">
+          <button onclick="returnToLevelScreen()" class="return-btn" style="
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #ff6f61, #ff8e8e);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 111, 97, 0.3);
+            transition: all 0.3s ease;
+            margin-right: 10px;
+          ">🏠 Return to Levels</button>
+          <button onclick="retryLevel()" class="retry-btn" style="
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+            transition: all 0.3s ease;
+          ">🔄 Retry Level</button>
+        </div>
+      `;
+    });
+
+
+fetch('/api/reward', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    level: parseInt(level),
+    lesson: lesson
+  })
+})
+.then(res => res.json())
+.then(data => {
+  
+  confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+quizBoxEl.innerHTML += `
+ <div class="rewardbox">
+  <div class="reward-summary">
+    <div class="reward-item coin">
+      🪙 <span class="reward-amount">+${data.reward}</span> Coins
+    </div>
+    <div class="reward-item words">
+      📘 New Words Discovered: <span class="reward-amount">${data.discovered_words}</span>
+    </div>
+  </div>
+</div>
+`;
+
+})
+.catch(err => {
+  console.error("Reward error:", err);
+  // Don't show error to user, just continue
+});
+
+// 🔥 Add streak reward
+if (maxStreak > 0) {
+  fetch('/api/streak-reward', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      streak: maxStreak
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.streak_bonus > 0) {
+      confetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } });
+      quizBoxEl.innerHTML += `
+        <div class="rewardbox">
+          <div class="reward-summary">
+            <div class="reward-item streak">
+              🔥 <span class="reward-amount">+${data.streak_bonus}</span> Streak Bonus Coins
+            </div>
+            <div class="reward-item streak-info">
+              Best Streak: ${maxStreak} correct answers in a row!
+            </div>
+          </div>
+        </div>
+      `;
+      showPopupMessage(`🔥 Streak Bonus: +${data.streak_bonus} coins!`);
+    }
+  })
+  .catch(err => {
+    console.error("Streak reward error:", err);
+    // Don't show error to user, just continue
+  });
+}
+
+
+        const wrongAnswers = quizData.filter((q, i) =>
+          q.user_answer && q.user_answer !== q.answer.join(" ")
+        ).length;
+
+        fetch('/api/gain-exp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            level: level,
+            wrong_count: wrongAnswers
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          const expPercent = Math.min(100, Math.round((data.current_exp / data.required_exp) * 100));
+          let expBar = `
+<div class="rewardbox">
+  <div class="level-exp-row">
+    <span class="level-label">🧠 Level ${data.account_level}</span>
+    <div class="exp-bar-container small">
+      <div class="exp-bar-fill" style="width: ${expPercent}%"></div>
+      <div class="exp-bar-text">${Math.round(data.current_exp)} / ${Math.round(data.required_exp)}</div>
+    </div>
+  </div>
+</div>
+  `;
+
+          // Show regular EXP message (level up notification will appear on level screen)
+showPopupMessage(`✨ ${data.message}`);
+quizBoxEl.innerHTML += expBar;
+
+        })
+        .catch(err => {
+          console.error("Gain exp error:", err);
+          // Don't show error to user, just continue
+        });
+
+
+        fetch('/api/words-discovered', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    level: level,
+    words: quizData.flatMap(q => {
+      // Collect all target language words (you may have your own logic)
+      if (q.type === 'choice-p2t' || q.type === 'fillblank-t' || q.type === 'audio-input') {
+        return q.answer;
+      } else if (q.type === 'choice-t2p') {
+        return [q.question];
+      }
+      return [];
+    })
+  })
+})
+.then(res => res.json())
+.then(data => {
+  quizBoxEl.innerHTML += `
+    
+  `;
+})
+.catch(err => {
+  console.error("Words discovered error:", err);
+  // Don't show error to user, just continue
+});
+
+
+        return;
+      }
+
+      mode = 'check';
+      checkBtn.textContent = "Check";
+      return;
+    }
+
+    // Check answer
+    let userAnswer = '';
+    let userCorrect = false;
+
+    if (current.type === 'input') {
+      userAnswer = document.getElementById('textAnswer').value.trim().toLowerCase();
+      userCorrect = userAnswer === current.answer.join(' ').toLowerCase();
+    } else {
+      userAnswer = selectedWords.join(' ');
+      userCorrect = userAnswer === current.answer.join(' ');
+    }
+
+    current.user_answer = userAnswer;
+
+    // Show skip feedback button immediately
+    skipFeedbackBtn.style.display = 'inline-block';
+    skipFeedbackBtn.disabled = false;
+    let skipUsed = false;
+    const skipHandler = () => {
+      if (skipUsed) return;
+      skipUsed = true;
+      skipFeedbackBtn.disabled = true;
+      currentIndex++;
+      if (currentIndex < quizData.length) {
+        loadQuestion();
+      } else if (!levelFinished) {
+        // Handle level completion (copy from existing logic)
+        levelFinished = true;
+        const sound = document.getElementById('celebrationSound');
+        sound.pause();
+        sound.currentTime = 0;
+        sound.play().catch(e => console.warn("Autoplay failed:", e));
+        confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
+        quizBoxEl.innerHTML = `<div class="game-over">🎉 Quiz Completed!</div> <br> <br>`;
+        const urlParams = new URLSearchParams(window.location.search);
+        const lesson = urlParams.get('lesson') || 'tagalog';
+        const isPerfectScore = correctAnswers === totalQuestions;
+        
+        console.log("🔍 QUIZ DEBUG (skip handler):", {
+          level: parseInt(level),
+          lesson,
+          perfect_score: isPerfectScore,
+          total_questions: totalQuestions,
+          correct_answers: correctAnswers,
+          perfect_calculation: `${correctAnswers} === ${totalQuestions} = ${correctAnswers === totalQuestions}`,
+          percentage: `${(correctAnswers / totalQuestions * 100).toFixed(1)}%`
+        });
+        
+        fetch('/api/complete_level', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            level: parseInt(level), 
+            lesson,
+            perfect_score: isPerfectScore,
+            total_questions: totalQuestions,
+            correct_answers: correctAnswers
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          console.log("🔍 API RESPONSE (skip):", data);
+          if (data.level_mastered) {
+            showPopupMessage("🎯 Level Mastered! Perfect Score!");
+          } else if (data.can_unlock_next) {
+            showPopupMessage("🔓 Next Level Unlocked! Perfect Score Required!");
+          } else if (isPerfectScore) {
+            showPopupMessage("🎯 Perfect Score! But you need to complete the current highest level to unlock the next.");
+          } else {
+            showPopupMessage("📚 Good job! Get a perfect score to master this level and unlock the next!");
+          }
+        })
+        .catch(err => {
+          console.error("Complete level error:", err);
+          showPopupMessage("⚠️ Error saving progress, but you can continue!");
+        })
+        .finally(() => {
+          quizBoxEl.innerHTML += `
+            <div style="text-align: center; margin-top: 20px;">
+              <button onclick="returnToLevelScreen()" class="return-btn" style="
+                padding: 12px 24px;
+                background: linear-gradient(135deg, #ff6f61, #ff8e8e);
+                color: white;
+                border: none;
+                border-radius: 25px;
+                font-weight: 600;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(255, 111, 97, 0.3);
+                transition: all 0.3s ease;
+                margin-right: 10px;
+              ">🏠 Return to Levels</button>
+              <button onclick="retryLevel()" class="retry-btn" style="
+                padding: 12px 24px;
+                background: linear-gradient(135deg, #2ecc71, #27ae60);
+                color: white;
+                border: none;
+                border-radius: 25px;
+                font-weight: 600;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+                transition: all 0.3s ease;
+              ">🔄 Retry Level</button>
+            </div>
+          `;
+        });
+        fetch('/api/reward', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            level: parseInt(level),
+            lesson: lesson
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+          quizBoxEl.innerHTML += `
+           <div class="rewardbox">
+            <div class="reward-summary">
+              <div class="reward-item coin">
+                🪙 <span class="reward-amount">+${data.reward}</span> Coins
+              </div>
+              <div class="reward-item words">
+                📘 New Words Discovered: <span class="reward-amount">${data.discovered_words}</span>
+              </div>
+            </div>
+          </div>
+          `;
+        })
+        .catch(err => {
+          console.error("Reward error:", err);
+        });
+        if (maxStreak > 0) {
+          fetch('/api/streak-reward', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              streak: maxStreak
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.streak_bonus > 0) {
+              confetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } });
+              quizBoxEl.innerHTML += `
+                <div class="rewardbox">
+                  <div class="reward-summary">
+                    <div class="reward-item streak">
+                      🔥 <span class="reward-amount">+${data.streak_bonus}</span> Streak Bonus Coins
+                    </div>
+                    <div class="reward-item streak-info">
+                      Best Streak: ${maxStreak} correct answers in a row!
+                    </div>
+                  </div>
+                </div>
+              `;
+              showPopupMessage(`🔥 Streak Bonus: +${data.streak_bonus} coins!`);
+            }
+          })
+          .catch(err => {
+            console.error("Streak reward error:", err);
+          });
+        }
+        const wrongAnswers = quizData.filter((q, i) =>
+          q.user_answer && q.user_answer !== q.answer.join(" ")
+        ).length;
+        fetch('/api/gain-exp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            level: level,
+            wrong_count: wrongAnswers
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          const expPercent = Math.min(100, Math.round((data.current_exp / data.required_exp) * 100));
+          let expBar = `
+<div class="rewardbox">
+  <div class="level-exp-row">
+    <span class="level-label">🧠 Level ${data.account_level}</span>
+    <div class="exp-bar-container small">
+      <div class="exp-bar-fill" style="width: ${expPercent}%"></div>
+      <div class="exp-bar-text">${Math.round(data.current_exp)} / ${Math.round(data.required_exp)}</div>
+    </div>
+  </div>
+</div>
+  `;
+          
+          // Show regular EXP message (level up notification will appear on level screen)
+          showPopupMessage(`✨ ${data.message}`);
+          quizBoxEl.innerHTML += expBar;
+        })
+        .catch(err => {
+          console.error("Gain exp error:", err);
+        });
+      }
+    };
+    // Remove previous handler to avoid stacking
+    skipFeedbackBtn.removeEventListener('click', skipFeedbackBtn._skipHandler);
+    skipFeedbackBtn._skipHandler = skipHandler;
+    skipFeedbackBtn.addEventListener('click', skipHandler);
+
+    if (userCorrect) {
+      feedbackEl.textContent = "✅ Correct!";
+      feedbackEl.className = 'correct';
+      correctAnswers++;
+      currentStreak++;
+      maxStreak = Math.max(maxStreak, currentStreak);
+      updateStreakDisplay();
+      playAnswerSound(true); // 🔊 Play correct sound
+    } else {
+      feedbackEl.textContent = "❌ Wrong. Correct: " + current.answer.join(' ');
+      feedbackEl.className = 'wrong';
+      currentStreak = 0;
+      updateStreakDisplay();
+      playAnswerSound(false); // 🔊 Play wrong sound
+
+      try {
+        const res = await fetch('/api/lose-life', { method: 'POST' });
+        const data = await res.json();
+        lives = data.lives;
+        updateLivesDisplay();
+
+        if (lives <= 0) {
+          setTimeout(showGameOver, 1000);
+          return;
+        }
+
+        await fetch('/api/update-lives', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lives })
+        });
+      } catch (err) {
+        console.error("Failed to update lives:", err);
+      }
+    }
+
+    // AI Feedback
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_answer: userAnswer,
+          correct_answer: current.answer.join(' '),
+          question: current.question
+        })
+      });
+      const data = await res.json();
+      aiFeedbackEl.textContent = "💡 " + data.feedback;
+    } catch (e) {
+      aiFeedbackEl.textContent = "⚠️ Unable to fetch AI feedback.";
+    }
+
+    mode = 'next';
+    checkBtn.textContent = "Next";
+  });
+
+  // Add skip feedback button event listener
+  skipFeedbackBtn.addEventListener('click', () => {
+    currentIndex++;
+    if (currentIndex < quizData.length) {
+      loadQuestion();
+    } else if (!levelFinished) {
+      // Handle level completion
+      levelFinished = true;
+      
+      const sound = document.getElementById('celebrationSound');
+      sound.pause();
+      sound.currentTime = 0;
+      sound.play().catch(e => console.warn("Autoplay failed:", e));
+
+      confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
+      quizBoxEl.innerHTML = `<div class="game-over">🎉 Quiz Completed!</div> <br> <br>`;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const lesson = urlParams.get('lesson') || 'tagalog';
+      
+      // Calculate if this was a perfect score
+      const isPerfectScore = correctAnswers === totalQuestions;
+      
+      console.log("🔍 QUIZ DEBUG (final):", {
+        level: parseInt(level),
+        lesson,
+        perfect_score: isPerfectScore,
+        total_questions: totalQuestions,
+        correct_answers: correctAnswers,
+        perfect_calculation: `${correctAnswers} === ${totalQuestions} = ${correctAnswers === totalQuestions}`,
+        percentage: `${(correctAnswers / totalQuestions * 100).toFixed(1)}%`
+      });
+      
+      console.log("🔍 QUIZ DEBUG (skip):", {
+        level: parseInt(level),
+        lesson,
+        perfect_score: isPerfectScore,
+        total_questions: totalQuestions,
+        correct_answers: correctAnswers,
+        perfect_calculation: `${correctAnswers} === ${totalQuestions} = ${correctAnswers === totalQuestions}`,
+        percentage: `${(correctAnswers / totalQuestions * 100).toFixed(1)}%`
+      });
+      
+      // Complete level API call
+      fetch('/api/complete_level', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          level: parseInt(level), 
+          lesson,
+          perfect_score: isPerfectScore,
+          total_questions: totalQuestions,
+          correct_answers: correctAnswers
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.level_mastered) {
+          showPopupMessage("🎯 Level Mastered! Perfect Score!");
+        } else if (data.can_unlock_next) {
+          showPopupMessage("🔓 Next Level Unlocked! Perfect Score Required!");
+        } else if (isPerfectScore) {
+          showPopupMessage("🎯 Perfect Score! But you need to complete the current highest level to unlock the next.");
+        } else {
+          showPopupMessage("📚 Good job! Get a perfect score to master this level and unlock the next!");
+        }
+      })
+      .catch(err => {
+        console.error("Complete level error:", err);
+        showPopupMessage("⚠️ Error saving progress, but you can continue!");
+      })
+      .finally(() => {
+        // Add completion buttons
+        quizBoxEl.innerHTML += `
+          <div style="text-align: center; margin-top: 20px;">
+            <button onclick="returnToLevelScreen()" class="return-btn" style="
+              padding: 12px 24px;
+              background: linear-gradient(135deg, #ff6f61, #ff8e8e);
+              color: white;
+              border: none;
+              border-radius: 25px;
+              font-weight: 600;
+              cursor: pointer;
+              box-shadow: 0 4px 15px rgba(255, 111, 97, 0.3);
+              transition: all 0.3s ease;
+              margin-right: 10px;
+            ">🏠 Return to Levels</button>
+            <button onclick="retryLevel()" class="retry-btn" style="
+              padding: 12px 24px;
+              background: linear-gradient(135deg, #2ecc71, #27ae60);
+              color: white;
+              border: none;
+              border-radius: 25px;
+              font-weight: 600;
+              cursor: pointer;
+              box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+              transition: all 0.3s ease;
+            ">🔄 Retry Level</button>
+          </div>
+        `;
+      });
+
+      // Handle rewards
+      fetch('/api/reward', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level: parseInt(level),
+          lesson: lesson
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+        quizBoxEl.innerHTML += `
+         <div class="rewardbox">
+          <div class="reward-summary">
+            <div class="reward-item coin">
+              🪙 <span class="reward-amount">+${data.reward}</span> Coins
+            </div>
+            <div class="reward-item words">
+              📘 New Words Discovered: <span class="reward-amount">${data.discovered_words}</span>
+            </div>
+          </div>
+        </div>
+        `;
+      })
+      .catch(err => {
+        console.error("Reward error:", err);
+      });
+
+      // Handle streak rewards
+      if (maxStreak > 0) {
+        fetch('/api/streak-reward', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            streak: maxStreak
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.streak_bonus > 0) {
+            confetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } });
+            quizBoxEl.innerHTML += `
+              <div class="rewardbox">
+                <div class="reward-summary">
+                  <div class="reward-item streak">
+                    🔥 <span class="reward-amount">+${data.streak_bonus}</span> Streak Bonus Coins
+                  </div>
+                  <div class="reward-item streak-info">
+                    Best Streak: ${maxStreak} correct answers in a row!
+                  </div>
+                </div>
+              </div>
+            `;
+            showPopupMessage(`🔥 Streak Bonus: +${data.streak_bonus} coins!`);
+          }
+        })
+        .catch(err => {
+          console.error("Streak reward error:", err);
+        });
+      }
+
+      // Handle EXP gain
+      const wrongAnswers = quizData.filter((q, i) =>
+        q.user_answer && q.user_answer !== q.answer.join(" ")
+      ).length;
+
+      fetch('/api/gain-exp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level: level,
+          wrong_count: wrongAnswers
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const expPercent = Math.min(100, Math.round((data.current_exp / data.required_exp) * 100));
+        let expBar = `
+<div class="rewardbox">
+  <div class="level-exp-row">
+    <span class="level-label">🧠 Level ${data.account_level}</span>
+    <div class="exp-bar-container small">
+      <div class="exp-bar-fill" style="width: ${expPercent}%"></div>
+      <div class="exp-bar-text">${Math.round(data.current_exp)} / ${Math.round(data.required_exp)}</div>
+    </div>
+  </div>
+</div>
+  `;
+
+        // Show regular EXP message (level up notification will appear on level screen)
+        showPopupMessage(`✨ ${data.message}`);
+        quizBoxEl.innerHTML += expBar;
+      })
+      .catch(err => {
+        console.error("Gain exp error:", err);
+      });
+    }
+  });
+}
+
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+
+async function fetchQuestions() {
+  try {
+    const livesRes = await fetch('/api/lives');
+    const livesData = await livesRes.json();
+    lives = livesData.lives;
+
+    if (lives <= 0) {
+      quizBoxEl.innerHTML = `<div class="game-over">💀 Game Over</div><p>No more lives left. Please come back later or earn more lives.</p>`;
+      return;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const level = urlParams.get('level') || 1;
+    const res = await fetch(`/api/questions/${level}`);
+
+    quizData = await res.json();
+    totalQuestions = quizData.length;
+    correctAnswers = 0;
+    currentStreak = 0; // 🔥 Reset streak
+    maxStreak = 0; // 🔥 Reset max streak
+    updateLivesDisplay();
+    updateStreakDisplay(); // 🔥 Update streak display
+    loadQuestion();
+  } catch (err) {
+    console.error("Failed to load quiz data or lives:", err);
+    questionEl.textContent = "Failed to load quiz.";
+  }
+}
+
+function showPopupMessage(text) {
+  const popup = document.getElementById('popupMessage');
+  popup.textContent = text;
+  popup.classList.add('show');
+
+  setTimeout(() => {
+    popup.classList.remove('show');
+  }, 2000); // 2 seconds
+}
+
+function playAnswerSound(isCorrect) {
+  const sound = document.getElementById(isCorrect ? 'correctSound' : 'wrongSound');
+  if (sound) {
+    sound.pause();
+    sound.currentTime = 0;
+    sound.play().catch(e => console.warn("Sound autoplay failed:", e));
+  }
+}
+
+function returnToLevelScreen() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const lesson = urlParams.get('lesson') || 'tagalog';
+  window.location.href = `/levelscreen?lesson=${lesson}`;
+}
+
+function retryLevel() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const lesson = urlParams.get('lesson') || 'tagalog';
+  window.location.href = `/level?level=${level}&lesson=${lesson}`;
+}
+
+// Start
+assignElements();
+setupCheckButton();
+fetchQuestions();
+</script>
+

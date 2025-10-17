@@ -1,0 +1,127 @@
+{% extends 'admin_layout.html' %}
+
+{% block content %}
+<style>
+    /* Embedded Styles for Professional Look */
+    .form-section-title {
+        color: #007bff; /* Primary blue for section titles */
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef; /* Light separator */
+        padding-bottom: 0.5rem;
+    }
+
+    .card-header-custom {
+        background-color: #f8f9fa; /* Light background for header */
+        border-bottom: 1px solid rgba(0,0,0,.125); /* Standard card border */
+        font-size: 1.25rem;
+        font-weight: 500;
+        padding: 1rem 1.5rem;
+        color: #343a40;
+    }
+
+    /* Adjust label alignment for better visual flow in grid */
+    .form-group-flex {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        height: 100%; /* Ensure consistent height for alignment */
+    }
+    .form-group-flex label {
+        margin-bottom: 0.5rem; /* Space between label and input */
+    }
+
+    /* Specific adjustments for input heights if needed (usually handled by Bootstrap) */
+    .form-control {
+        height: calc(1.5em + .75rem + 2px); /* Standard Bootstrap height */
+    }
+
+    /* Small screen adjustments for better form flow */
+    @media (max-width: 767.98px) {
+        .form-group-flex {
+            margin-bottom: 1rem; /* Add some space between stacked fields on small screens */
+        }
+    }
+</style>
+
+<div class="container-fluid mt-4"> {# Use container-fluid for full width or container for fixed width #}
+    <div class="row justify-content-center"> {# Center the card horizontally #}
+        <div class="col-lg-8 col-md-10"> {# Adjust column size for responsiveness #}
+            <div class="card shadow-sm mb-4"> {# Add shadow and margin-bottom to the card #}
+                <div class="card-header card-header-custom">
+                    ✨ Add New Question
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <h5 class="form-section-title">Question Details</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group-flex">
+                                    <label for="level" class="form-label">Level:</label>
+                                    <input type="number" class="form-control" id="level" name="level" required min="1" max="100">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group-flex">
+                                    <label for="itemnum" class="form-label">Item #:</label>
+                                    <input type="number" class="form-control" id="itemnum" name="itemnum" required min="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-group-flex">
+                                <label for="type" class="form-label">Question Type:</label>
+                                <select class="form-select" name="type" id="type" required>
+                                    <option value="" disabled selected>Select a question type</option> {# Placeholder #}
+                                    <option value="choice-p2t">Multiple Choice (Target Language) </option>
+                                    <option value="choice-t2p">Multiple Choice (Prefered Language) </option>
+                                    <option value="fillblank-t">Fill-in-the-Blank </option>
+                                    <option value="audio-choice">Audio with Choice</option>
+                                    <option value="audio-input">Audio with text Input</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <h5 class="form-section-title">Translations</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group-flex">
+                                    <label for="english" class="form-label">English:</label>
+                                    <input type="text" class="form-control" id="english" name="english" required placeholder="Enter English translation">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group-flex">
+                                    <label for="tagalog" class="form-label">Tagalog:</label>
+                                    <input type="text" class="form-control" id="tagalog" name="tagalog" required placeholder="Enter Tagalog translation">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group-flex">
+                                    <label for="waray" class="form-label">Waray:</label>
+                                    <input type="text" class="form-control" id="waray" name="waray" required placeholder="Enter Waray translation">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group-flex">
+                                    <label for="cebuano" class="form-label">Cebuano:</label>
+                                    <input type="text" class="form-control" id="cebuano" name="cebuano" required placeholder="Enter Cebuano translation">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4"> {# Use d-grid for full-width button on small screens #}
+                            <button type="submit" class="btn btn-primary btn-lg">Add Question</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

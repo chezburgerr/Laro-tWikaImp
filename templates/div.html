@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500&display=swap" rel="stylesheet">
+  <title>Responsive Layout</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Fredoka', Arial, sans-serif;
+      background: linear-gradient(135deg, #eaf2ff, #ffebee);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1565c0, #0d47a1);
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 5px solid #b71c1c;
+      box-shadow: 
+        0 6px 20px rgba(21, 101, 192, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 70px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+      animation: headerFloat 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes headerFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(180deg); }
+    }
+
+    .logo-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo {
+      height: 50px;
+      width: 50px;
+      object-fit: contain;
+      border-radius: 50%;
+      border: 2px solid white;
+      background-color: white;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #fff;
+      text-shadow: 2px 2px #90caf9;
+    }
+
+    .menu-toggle {
+      display: none;
+      font-size: 2rem;
+      background: linear-gradient(135deg, #b71c1c, #e53935);
+      border: 2px solid #fff;
+      color: white;
+      cursor: pointer;
+      border-radius: 12px;
+      padding: 8px 12px;
+      box-shadow: 
+        0 4px 15px rgba(183, 28, 28, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .menu-toggle:hover {
+      background: linear-gradient(135deg, #c62828, #b71c1c);
+      transform: scale(1.1);
+      box-shadow: 
+        0 6px 20px rgba(198, 40, 40, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    }
+
+    .container {
+      display: flex;
+      flex: 1;
+     
+      height: calc(100vh - 70px - 50px); /* minus header and footer */
+      overflow: hidden;
+    }
+
+    .sidebar {
+      background: linear-gradient(135deg, #e3f2fd, #eaf2ff);
+      width: 220px;
+      padding: 1.2rem;
+      border-right: 4px solid #90caf9;
+      overflow: hidden;
+      box-shadow: 
+        inset 0 0 20px rgba(144, 202, 249, 0.15),
+        5px 0 15px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, transparent 30%, rgba(25, 118, 210, 0.06) 50%, transparent 70%);
+      pointer-events: none;
+      animation: sidebarShimmer 4s ease-in-out infinite;
+    }
+
+    @keyframes sidebarShimmer {
+      0%, 100% { transform: translateX(-100%); }
+      50% { transform: translateX(100%); }
+    }
+
+    .sidebar ul {
+      list-style: none;
+    }
+
+    .sidebar li {
+      margin-bottom: 1rem;
+    }
+
+    .sidebar a {
+      display: block;
+      background: linear-gradient(135deg, #bbdefb, #90caf9);
+      padding: 0.8rem 1.2rem;
+      border-radius: 16px;
+      text-decoration: none;
+      color: #444;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        0 4px 15px rgba(144, 202, 249, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+      border: 2px solid #fff;
+      margin-bottom: 0.8rem;
+    }
+
+    .sidebar a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.5s;
+    }
+
+    .sidebar a:hover::before {
+      left: 100%;
+    }
+
+    .sidebar a:hover {
+      background: linear-gradient(135deg, #90caf9, #64b5f6);
+      color: #000;
+      transform: scale(1.08) translateY(-2px);
+      box-shadow: 
+        0 8px 25px rgba(100, 181, 246, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+      border-color: #64b5f6;
+    }
+
+    .logout-section {
+      position: absolute;
+      bottom: 00px;
+      left: 10px;
+      right: 10px;
+      padding-top: 20px;
+      border-top: 2px solid rgba(255, 179, 71, 0.3);
+    }
+
+    .logout-btn {
+      display: block;
+      background: linear-gradient(135deg, #e0e0e0, #d0d0d0);
+      padding: 0.6rem 1rem;
+      border-radius: 12px;
+      text-decoration: none;
+      color: #666;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.1),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3);
+      border: 1px solid #ccc;
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .logout-btn:hover {
+      background: linear-gradient(135deg, #b71c1c, #e53935);
+      color: white;
+      transform: scale(1.05);
+      box-shadow: 
+        0 4px 12px rgba(183, 28, 28, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3);
+      border-color: #c62828;
+      opacity: 1;
+    }
+
+    .content {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .quiz-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .quiz-box {
+      width: 100%;
+      max-width: 700px;
+      margin: auto;
+      padding: 2rem;
+      border-radius: 24px;
+      background: #fff;
+      border: 4px dashed #90caf9;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .quiz-box:hover {
+      transform: scale(1.01);
+    }
+
+    footer {
+      background: linear-gradient(135deg, #1565c0, #0d47a1);
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      border-top: 5px solid #b71c1c;
+      height: 50px;
+      line-height: 1.5;
+      box-shadow: 
+        0 -4px 15px rgba(21, 101, 192, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    footer::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+      animation: footerFloat 8s ease-in-out infinite reverse;
+      pointer-events: none;
+    }
+
+    @keyframes footerFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(180deg); }
+    }
+
+    @media (max-width: 768px) {
+      .menu-toggle {
+        display: block;
+      }
+
+      .container {
+        flex-direction: column;
+        height: auto;
+      }
+
+      .sidebar {
+        position: absolute;
+        top: 70px;
+        left: 0;
+        height: calc(100vh - 70px);
+        transform: translateX(-100%);
+        z-index: 1000;
+        box-shadow: 5px 0 10px rgba(0, 0, 0, 0.2);
+        width: 200px;
+      }
+
+      .sidebar.active {
+        transform: translateX(0);
+      }
+
+      .content {
+        height: calc(100vh - 120px); /* adjust for mobile */
+        overflow-y: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-title">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo" />
+    <h1>LARO'T WIKA</h1>
+  </div>
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+</header>
+
+<div class="container">
+  <aside class="sidebar" id="sidebar">
+    <nav>
+      <ul>
+       <li><a href="/select_lesson">Home</a></li>
+        <li><a href="/levelscreen">Levels</a></li>
+        <li><a href="/shop">Shop</a></li>
+        <li><a href="/inventory">Inventory</a></li>
+        <li><a href="/my-words">My Words</a></li>
+        <li><a href="/leaderboard">Leaderboard</a></li>
+         <li><a href="/profile">Profile</a></li>
+    
+      </ul>
+    </nav>
+    <div class="logout-section">
+      <a href="#" onclick="confirmLogout()" class="logout-btn">🚪 Logout</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="quiz-wrapper" id="mainContent">
+      {% if level_file %}
+        {% include level_file %}
+      {% elif page %}
+        {% include page %}
+      {% else %}
+        {% include 'levelscreen.html' %}
+      {% endif %}
+    </div>
+  </main>
+</div>
+
+<footer>
+  <p>&copy; 2025 Laro't Wika</p>
+</footer>
+
+<script>
+  function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    sidebar.classList.toggle("active");
+  }
+
+  function confirmLogout() {
+    if (confirm("Are you sure you want to logout? Your progress will be saved.")) {
+      window.location.href = "/logout";
+    }
+  }
+
+  function loadLevel(filename) {
+    fetch(`/level/${filename.replace('.html', '')}`)
+      .then(response => response.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        const mainContent = document.getElementById('mainContent');
+        const newMain = doc.getElementById('mainContent');
+
+        if (newMain) {
+          mainContent.innerHTML = newMain.innerHTML;
+
+          const scripts = mainContent.querySelectorAll('script');
+          scripts.forEach(script => {
+            const newScript = document.createElement('script');
+            if (script.src) {
+              newScript.src = script.src;
+            } else {
+              newScript.textContent = script.textContent;
+            }
+            document.body.appendChild(newScript);
+          });
+
+          history.pushState(null, '', `/level/${filename.replace('.html', '')}`);
+        }
+      });
+  }
+
+  window.onpopstate = function () {
+    const path = location.pathname.split('/').pop();
+    if (path.startsWith("level")) {
+      loadLevel(path);
+    } else {
+      location.reload(); // fallback
+    }
+  };
+</script>
+
+</body>
+</html>

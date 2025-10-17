@@ -1,0 +1,43 @@
+{% extends 'admin_layout.html' %}
+
+{% block content %}
+<h1 class="mb-4">{{ title }}</h1>
+<a href="{{ url_for('admin.manage_boss_levels') }}" class="btn btn-secondary mb-3">Back to Boss Levels List</a>
+
+<div class="card">
+    <div class="card-header">
+        Edit Boss Level
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('admin.edit_boss_level', boss_level_id=boss_level.id) }}" method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="boss" class="form-label">Boss *</label>
+                    <input type="number" class="form-control" id="boss" name="boss" required min="1" value="{{ boss_level.boss }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="itemnum" class="form-label">Item Number *</label>
+                    <input type="number" class="form-control" id="itemnum" name="itemnum" required min="1" value="{{ boss_level.itemnum }}">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="tagalog" class="form-label">Tagalog *</label>
+                <input type="text" class="form-control" id="tagalog" name="tagalog" required value="{{ boss_level.tagalog }}">
+            </div>
+            <div class="mb-3">
+                <label for="waray" class="form-label">Waray *</label>
+                <input type="text" class="form-control" id="waray" name="waray" required value="{{ boss_level.waray }}">
+            </div>
+            <div class="mb-3">
+                <label for="cebuano" class="form-label">Cebuano *</label>
+                <input type="text" class="form-control" id="cebuano" name="cebuano" required value="{{ boss_level.cebuano }}">
+            </div>
+            <div class="mb-3">
+                <label for="type" class="form-label">Type *</label>
+                <input type="text" class="form-control" id="type" name="type" required value="{{ boss_level.type }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Update Boss Level</button>
+        </form>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,134 @@
+<div class="my-words-container">
+  <h2>📚 My Words - Level {{ level }} ({{ lesson }})</h2>
+  <br>
+  {% if words %}
+    <input type="text" id="searchInput" placeholder="Search word..." class="search-box" onkeyup="filterWords()">
+
+    <ul class="word-list" id="wordList">
+      {% for word in words %}
+        <li onclick="showDefinition('{{ word }}')">{{ word }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No words found for this level.</p>
+  {% endif %}
+</div>
+
+<!-- Modal -->
+<div id="definitionModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h3 id="modalWord"></h3>
+    <p id="modalDefinition">Loading...</p>
+  </div>
+</div>
+
+<style>
+.my-words-container {
+  padding: 20px;
+  max-width: 500px;
+  margin: auto;
+}
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 100;
+  padding-bottom: 10px;
+  padding-top: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.search-box {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.word-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 15px;
+}
+
+.word-list li {
+  background-color: #f5f5f5;
+  padding: 10px 15px;
+  margin-bottom: 8px;
+  border-radius: 5px;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+/* Modal styles */
+.modal {
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 15% auto;
+  padding: 20px;
+  width: 80%;
+  max-width: 400px;
+  border-radius: 8px;
+  text-align: left;
+  color: #333;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+}
+</style>
+
+<script>
+function filterWords() {
+  const input = document.getElementById('searchInput').value.toLowerCase();
+  const words = document.getElementById('wordList').getElementsByTagName('li');
+
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i].textContent.toLowerCase();
+    words[i].style.display = word.includes(input) ? '' : 'none';
+  }
+}
+
+function showDefinition(word) {
+  document.getElementById('modalWord').textContent = word;
+  document.getElementById('modalDefinition').textContent = 'Loading...';
+  document.getElementById('definitionModal').style.display = 'block';
+
+  fetch('/api/word-info', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ word: word })
+  })
+  .then(response => response.json())
+  .then(data => {
+    document.getElementById('modalDefinition').textContent = data.definition || 'No definition found.';
+  })
+  .catch(error => {
+    document.getElementById('modalDefinition').textContent = 'Error fetching definition.';
+    console.error(error);
+  });
+}
+
+function closeModal() {
+  document.getElementById('definitionModal').style.display = 'none';
+}
+</script>

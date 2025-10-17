@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Speech Battle Game</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/player-animation.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <style>
+   * {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Georgia', serif;
+  color: #3b2f2f;
+  margin: 0;
+  padding: 2em;
+}
+
+
+h2, h3 {
+  color: #7a3600;
+  text-shadow: 0 1px 1px #ffd7a3;
+}
+
+select {
+  padding: 8px 12px;
+  font-size: 1em;
+  border-radius: 5px;
+  border: 2px solid #d7a257;
+  margin: 0.5em;
+  background: #fff3dc;
+  color: #4d2b1a;
+}
+
+.battle-area {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  margin: 2em auto;
+  gap: 2em;
+  max-width: 1000px;
+  position: relative;
+  top: 50px; /* Lower the battle area by 100px */
+}
+
+.fighter-box {
+  background: transparent;
+  border: none;
+  padding: 1em;
+  width: 260px;
+  text-align: center;
+  box-shadow: none;
+  position: relative; /* Added for shield positioning */
+}
+
+
+.hp-bar {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  background: #444;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 0.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hp-fill {
+  height: 100%;
+  background: #4caf50;
+  width: 100%;
+  transition: width 0.3s ease-in-out;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.hp-bar span,
+.sinister-bar span {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+
+
+    .sinister-bar {
+      background: #2b0000;
+      border: 1px solid #990000;
+      box-shadow: 0 0 10px #330000 inset;
+      margin-top: 2px;
+      max-height: 10px;
+    }
+
+    .sinister-fill {
+      background: linear-gradient(90deg, #660000, #990000, #cc0000);
+      height: 100%;
+      transition: width 0.4s ease-in-out;
+      box-shadow: 0 0 15px #ff0000aa;
+      animation: pulseGlow 2s infinite;
+    }
+
+    .sinister-fill.full {
+      animation: flash 0.2s alternate infinite, pulseGlow 2s infinite;
+      box-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000aa;
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 10px #550000aa; }
+      50% { box-shadow: 0 0 25px #ff0000cc; }
+      100% { box-shadow: 0 0 10px #550000aa; }
+    }
+
+    @keyframes flash {
+      from { filter: brightness(1); }
+      to { filter: brightness(2); }
+    }
+
+
+
+.goodguy-bar {
+  background: #001a33;
+  border: 1px solid #0077cc;
+  box-shadow: 0 0 10px #003366 inset;
+  margin-top: 2px;
+  max-height: 10px;
+}
+
+.goodguy-fill {
+  background: linear-gradient(90deg, #0077cc, #00aaff, #33ccff);
+  height: 100%;
+  transition: width 0.4s ease-in-out;
+  box-shadow: 0 0 15px #00ccffaa;
+  animation: glowHero 2s infinite;
+}
+
+.goodguy-fill.full {
+  animation: flashHero 0.2s alternate infinite, glowHero 2s infinite;
+  box-shadow: 0 0 20px #00e6ff, 0 0 40px #00e6ffaa;
+}
+
+@keyframes glowHero {
+  0% { box-shadow: 0 0 10px #005577aa; }
+  50% { box-shadow: 0 0 25px #00ccffaa; }
+  100% { box-shadow: 0 0 10px #005577aa; }
+}
+
+@keyframes flashHero {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.8); }
+}
+
+
+.ui {
+  max-width: 700px;
+  margin: 2em auto;
+  text-align: center;
+}
+
+#message-box {
+  background: #fef6e0;
+  padding: 1em;
+  border-radius: 10px;
+  font-size: 1.2em;
+  margin-bottom: 1em;
+  border: 2px solid #d7a257;
+  color: #4d2b1a;
+  height: 100px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  white-space: normal;
+  position: relative;
+}
+
+#message-box.typewriter {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+#message-box.typewriter::after {
+  content: '|';
+  animation: blink 1s infinite;
+  color: #4d2b1a;
+  font-weight: bold;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.word, .recognized {
+  font-size: 1.4em;
+  margin: 1em 0;
+}
+
+.word span {
+  color: #cc7000;
+  font-weight: bold;
+}
+
+.recognized span {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+#type-box input {
+  font-size: 1.2em;
+  padding: 0.5em;
+  width: 200px;
+  border-radius: 5px;
+  border: 1px solid #d7a257;
+  background: #fff8e7;
+  color: #4d2b1a;
+}
+
+button {
+  background: linear-gradient(to right, #ffcc70, #ffbb55);
+  color: #4d2b1a;
+  border: 2px solid #d7a257;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 16px;
+  margin: 0.5em;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+button:hover {
+  background: #ffe4b3;
+  transform: scale(1.05);
+}
+
+#block-btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* Shield animation styles */
+#shield-barrier, #shield-break {
+  pointer-events: none;
+  overflow: hidden;
+}
+
+#shield-barrier img, #shield-break img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: shieldGlow 2s infinite;
+}
+
+@keyframes shieldGlow {
+  0% { filter: brightness(1) drop-shadow(0 0 5px #00ccff); }
+  50% { filter: brightness(1.2) drop-shadow(0 0 15px #00ccff); }
+  100% { filter: brightness(1) drop-shadow(0 0 5px #00ccff); }
+}
+
+.damage-text {
+  position: absolute;
+  font-weight: bold;
+  color: red;
+  font-size: 20px;
+  animation: floatFade 1s ease-out forwards;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+@keyframes floatFade {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}
+
+#potions-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1em;
+  margin-top: 1em;
+}
+
+.potion-circle {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #fff2db;
+  border: 3px solid #d7a257;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.potion-circle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px #ffd88c;
+}
+
+.potion-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.potion-qty {
+  position: absolute;
+  bottom: 3px;
+  right: 5px;
+  background: rgba(255, 245, 200, 0.8);
+  color: #4d2b1a;
+  font-size: 13px;
+  font-weight: bold;
+  border-radius: 50%;
+  padding: 2px 6px;
+  border: 1px solid #d7a257;
+}
+
+.heal-text {
+  position: absolute;
+  color: #43a047;
+  font-size: 1.5em;
+  font-weight: bold;
+  animation: floatUp 1s ease-out;
+  pointer-events: none;
+}
+
+@keyframes floatUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+}
+
+.potion-disabled {
+  opacity: 0.4;
+  filter: grayscale(100%);
+  pointer-events: none;
+  border: 3px solid #ccc;
+  cursor: not-allowed;
+}
+
+#victory-popup {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 239, 200, 0.85);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+#gameover-popup {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(139, 0, 0, 0.85);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+#victory-popup .modal-content {
+  background: #fff8e7;
+  padding: 2em 3em;
+  border-radius: 20px;
+  text-align: center;
+  color: #3b2f2f;
+  box-shadow: 0 0 25px #ffebad;
+  animation: popIn 0.5s ease-out;
+  position: relative;
+  border: 2px solid #d7a257;
+}
+
+#gameover-popup .modal-content {
+  background: #2b0000;
+  padding: 2em 3em;
+  border-radius: 20px;
+  text-align: center;
+  color: #ffffff;
+  box-shadow: 0 0 25px #ff0000;
+  animation: popIn 0.5s ease-out;
+  position: relative;
+  border: 2px solid #990000;
+}
+
+#victory-popup h2 {
+  font-size: 2em;
+  margin-bottom: 0.5em;
+  color: #d78c00;
+  text-shadow: 0 0 10px #ffe6b3;
+}
+
+#reward-text {
+  font-size: 1.3em;
+  margin-bottom: 1em;
+  color: #b97700;
+  font-weight: bold;
+  text-shadow: 0 0 10px #ffdb77;
+}
+
+#victory-popup button {
+  padding: 12px 28px;
+  font-size: 1.2em;
+  background: linear-gradient(to right, #ffe4a3, #ffd480);
+  color: #4d2b1a;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 0 15px #ffecb3;
+  transition: transform 0.2s ease;
+}
+
+#victory-popup button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px #ffefa3;
+}
+
+@media screen and (max-width: 768px) {
+  .battle-area {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+
+body {
+  background: url('{{ url_for('static', filename='img/Andresbackground.png') }}') no-repeat center center fixed;
+  background-size: cover;
+}
+  </style>
+</head>
+<body>
+
+
+
+
+
+  <div class="battle-area">
+  <!-- Player -->
+<div class="fighter-box">
+  <!-- Slash Projectile -->
+<div id="slash-projectile"></div>
+
+  <h3>You</h3>
+  <div class="hp-bar">
+    <div class="hp-fill" id="hero-bar"></div>
+    <span id="hero-hp">100</span>
+  </div>
+
+  <div class="hp-bar goodguy-bar">
+    <div class="hp-fill goodguy-fill" id="player-energy" style="width: 0%;"></div>
+  </div>
+
+  <div id="player-sprite" style="position: relative;">
+    <!-- Shield animations inside player sprite -->
+    <div id="shield-barrier" style="display: none; position: absolute; top: -40px; left: -40px; width: calc(130% + 70px); height: calc(130% + 70px); z-index: 10;">
+      <img src="{{ url_for('static', filename='sprites/shield.gif') }}" alt="Shield" style="width: 100%; height: 100%; object-fit: contain;">
+    </div>
+    <div id="shield-break" style="display: none; position: absolute; top: -40px; left: -40px; width: calc(100% + 50px); height: calc(100% + 50px); z-index: 10;">
+      <img src="{{ url_for('static', filename='sprites/break.gif') }}" alt="Shield Break" style="width: 100%; height: 100%; object-fit: contain;">
+    </div>
+  </div> <!-- ✅ moved below energy bar -->
+</div>
+
+
+  <!-- Enemy -->
+<div class="fighter-box">
+  <div id="enemy-slash-projectile" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 150px; height: 100px; z-index: 10;">
+  <img src="{{ url_for('static', filename='sprites/redslash.gif') }}" alt="Enemy Slash" style="width: 100%; height: 100%; object-fit: contain;">
+</div>
+  <h3>Enemy</h3>
+  <div class="hp-bar">
+    <div class="hp-fill" id="enemy-bar"></div>
+    <span id="enemy-hp">100</span>
+  </div>
+
+  <div class="hp-bar sinister-bar">
+    <div class="hp-fill sinister-fill" id="enemy-energy" style="width: 0%;"></div>
+  </div>
+
+  <div id="enemy-sprite"></div> <!-- ✅ moved below energy bar -->
+</div>
+
+<!-- Enemy slash projectile (positioned relative to battle area) -->
+
+</div>
+
+</div>
+
+
+  <div class="ui">
+    <div id="message-box"></div>
+
+    <div class="word" id="word-instruction">Say this word: <span id="target">(loading...)</span></div>
+
+    <div class="recognized">You said: <span id="output">(waiting...)</span></div>
+
+    <div id="type-box" style="display:none;">
+      <label for="typed-input">Type what you hear:</label><br>
+      <input type="text" id="typed-input" />
+      <button id="replay-btn" onclick="replayTTS()" style="display: none; margin-left: 10px; padding: 8px 12px; background: linear-gradient(to right, #4CAF50, #45a049); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">🔊 Replay</button>
+    </div>
+
+    <div id="controls">
+      <button onclick="checkAnswer()" id="check-btn">Attack</button>
+      <button onclick="activateBlock()" id="block-btn" style="display: none;">🛡️ Block</button>
+    </div>
+
+    <div id="potion-inventory" style="margin-top: 1.5em; text-align: center;">
+  <div id="potions-container" style="display: flex; justify-content: center; flex-wrap: wrap; gap: 1em;">
+    <!-- Potions will be injected here -->
+  </div>
+</div>
+
+  </div>
+
+<!-- 🎉 Victory Popup -->
+<div id="victory-popup">
+  <div class="modal-content">
+    <h2>🏆 Enemy Defeated!</h2>
+    <p id="reward-text">You earned 💰 100 Coins and ⭐ 100 EXP!</p>
+    <button onclick="goHome()">🏠 Go Home</button>
+  </div>
+</div>
+
+<!-- 💀 Game Over Popup -->
+<div id="gameover-popup">
+  <div class="modal-content">
+    <h2>💀 Game Over!</h2>
+    <p id="gameover-text">You were defeated! Rewards reduced by 90%.</p>
+    <p id="reduced-reward-text">You earned 💰 20 Coins and ⭐ 30 EXP!</p>
+    <button onclick="goHome()">🏠 Go Home</button>
+  </div>
+</div>
+
+
+
+  <script src="{{ url_for('static', filename='js/player.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/enemy.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/general.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/potions.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/player-animation.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/enemy-animation.js') }}"></script>
+<canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;pointer-events:none;"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+// Initialize the first message with typewriter effect
+document.addEventListener('DOMContentLoaded', function() {
+  setMessageWithTypewriter('⚔️ Battle begins! Say the word to attack.');
+});
+
+function showVictory() {
+  const popup = document.getElementById("victory-popup");
+  popup.style.display = "flex";
+
+  // Play victory sound
+  const sound = document.getElementById("victory-sound");
+  sound.currentTime = 0; // Rewind if already playing
+  sound.play();
+
+  // Optional confetti (if added)
+  if (window.confetti) {
+confetti({
+  particleCount: 200,
+  spread: 100,
+  origin: { y: 0.6 },
+  zIndex: 10000  // Ensure it's in front
+});
+
+  }
+}
+
+function showGameOver(reducedCoins, reducedExp) {
+  const popup = document.getElementById("gameover-popup");
+  popup.style.display = "flex";
+
+  // Play game over sound
+  const sound = document.getElementById("gameover-sound");
+  sound.currentTime = 0; // Rewind if already playing
+  sound.play();
+
+  // Update the reduced reward text
+  document.getElementById("reduced-reward-text").innerHTML = 
+    `You earned 💰 ${reducedCoins} Coins<br>You earned ⭐ ${reducedExp} EXP!`;
+}
+
+function playMPEnergySound() {
+  const mpSound = document.getElementById('mpheal-sound');
+  if (mpSound) {
+    mpSound.currentTime = 0;
+    mpSound.play();
+  }
+}
+
+function playPowerupSound() {
+  const powerupSound = document.getElementById('powerup-sound');
+  if (powerupSound) {
+    powerupSound.currentTime = 0;
+    powerupSound.play();
+  }
+}
+
+function playShieldUpSound() {
+  const shieldSound = document.getElementById('shieldup-sound');
+  if (shieldSound) {
+    shieldSound.currentTime = 0;
+    shieldSound.play();
+  }
+}
+
+function playShieldImpactSound() {
+  const impactSound = document.getElementById('shieldimpact-sound');
+  if (impactSound) {
+    impactSound.currentTime = 0;
+    impactSound.play();
+  }
+}
+</script>
+
+<audio id="victory-sound" src="{{ url_for('static', filename='sounds/celebration.mp3') }}"></audio>
+<audio id="gameover-sound" src="{{ url_for('static', filename='sounds/gameover.mp3') }}" preload="auto"></audio>
+<audio id="player-slash-sound" src="{{ url_for('static', filename='sounds/characterslash.mp3') }}" preload="auto"></audio>
+<audio id="enemy-slash-sound" src="{{ url_for('static', filename='sounds/enemyslash.mp3') }}" preload="auto"></audio>
+<audio id="heal-sound" src="{{ url_for('static', filename='sounds/heal.mp3') }}" preload="auto"></audio>
+<audio id="mpheal-sound" src="{{ url_for('static', filename='sounds/mpheal.mp3') }}" preload="auto"></audio>
+<audio id="powerup-sound" src="{{ url_for('static', filename='sounds/powerup.mp3') }}" preload="auto"></audio>
+<audio id="shieldup-sound" src="{{ url_for('static', filename='sounds/shieldup.mp3') }}" preload="auto"></audio>
+<audio id="shieldimpact-sound" src="{{ url_for('static', filename='sounds/shieldimpact.mp3') }}" preload="auto"></audio>
+
+</body>
+</html>

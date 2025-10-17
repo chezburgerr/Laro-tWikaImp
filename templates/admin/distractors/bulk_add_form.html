@@ -1,0 +1,59 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Bulk Add Distractors</h1>
+        <a href="{{ url_for('admin.manage_distractors') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Distractors
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Bulk Add Distractors:</strong> This feature allows you to add distractors for all questions in a specific level at once.
+            </div>
+
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="level" class="form-label">Select Level *</label>
+                            <input type="number" class="form-control" id="level" name="level" 
+                                   required min="1" placeholder="Enter level number">
+                            <div class="form-text">Choose the level for which you want to add distractors</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('admin.manage_distractors') }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-layer-group"></i> Continue to Bulk Add
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">How it works:</h5>
+        </div>
+        <div class="card-body">
+            <ol>
+                <li>Enter the level number you want to add distractors for</li>
+                <li>The system will show you all questions in that level that don't have distractors yet</li>
+                <li>Fill in the distractor text for each question (at least one language is required)</li>
+                <li>Submit to add all distractors at once</li>
+            </ol>
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Note:</strong> Only questions that don't already have distractors will be shown.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

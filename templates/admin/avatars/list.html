@@ -1,0 +1,73 @@
+{% extends 'admin_layout.html' %}
+
+{% block content %}
+<h1 class="mb-4">{{ title }}</h1>
+<a href="{{ url_for('admin.add_avatar') }}" class="btn btn-success mb-3">Add New Avatar</a>
+
+{% if avatars %}
+<div class="table-responsive">
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Avatar</th>
+                <th>Filename</th>
+                <th>Price</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for avatar in avatars %}
+            <tr>
+                <td>
+    <img src="https://uktdymsgfgodbwesdvsj.supabase.co/storage/v1/object/public/avatars/{{ avatar.filename }}"
+         alt="Avatar"
+         width="50"
+         height="50"
+         style="cursor:pointer; object-fit: cover;"
+         data-bs-toggle="modal"
+         data-bs-target="#imagePreviewModal"
+         data-img-url="https://uktdymsgfgodbwesdvsj.supabase.co/storage/v1/object/public/avatars/{{ avatar.filename }}">
+</td>
+
+                <td>{{ avatar.filename }}</td>
+                <td>{{ avatar.price }}</td>
+                <td>{{ avatar.description | default('N/A', true) }}</td>
+                <td>
+                    <a href="{{ url_for('admin.edit_avatar', avatar_id=avatar.id) }}" class="btn btn-sm btn-info">Edit</a>
+                    <form action="{{ url_for('admin.delete_avatar', avatar_id=avatar.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this avatar?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p>No avatars found.</p>
+{% endif %}
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-transparent border-0 shadow-none">
+      <div class="modal-body text-center p-0">
+        <img id="previewImage" src="" alt="Avatar Preview" class="img-fluid rounded" style="background: none;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var imagePreviewModal = document.getElementById('imagePreviewModal');
+    var previewImage = document.getElementById('previewImage');
+
+    imagePreviewModal.addEventListener('show.bs.modal', function (event) {
+        var triggerImg = event.relatedTarget;
+        var imageUrl = triggerImg.getAttribute('data-img-url');
+        previewImage.src = imageUrl;
+    });
+});
+</script>
+{% endblock %}

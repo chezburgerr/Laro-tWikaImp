@@ -1,0 +1,419 @@
+{% extends 'admin_layout.html' %}
+
+{% block title %}User Details - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">User Details</h1>
+        <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Users
+        </a>
+        </div>
+
+    <!-- User Header -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                {% if user_avatar %}
+                <img src="https://uktdymsgfgodbwesdvsj.supabase.co/storage/v1/object/public/avatars/{{ user_avatar.filename }}"
+                     alt="{{ user_avatar.description }}" class="avatar-thumbnail me-4">
+                {% else %}
+                <div class="avatar-placeholder me-4">
+                    <i class="fas fa-user"></i>
+                </div>
+                {% endif %}
+                <div>
+                    <h2 class="mb-1">{{ user.username }}</h2>
+                    <p class="text-muted mb-2">{{ user.email }}</p>
+                    <div class="d-flex gap-2">
+                        {% if user.role == 'admin' %}
+                            <span class="badge bg-danger">Admin</span>
+                        {% else %}
+                            <span class="badge bg-secondary">User</span>
+                        {% endif %}
+                        <span class="badge bg-info">Level {{ user.account_level }}</span>
+                        <span class="badge bg-success">
+                            <i class="fas fa-coins me-1"></i>{{ user.coins }} Coins
+                        </span>
+                        <span class="badge bg-warning">
+                            <i class="fas fa-heart me-1"></i>{{ user.lives }}/5 Lives
+                        </span>
+                    </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Profile Section -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user-edit me-2"></i>User Profile
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('admin.edit_user', user_id=user.id) }}" method="post" id="user-profile-form">
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>Basic Information
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="username" class="form-label fw-bold">
+                                        <i class="fas fa-user me-1"></i>Username
+                                    </label>
+                                    <input type="text" class="form-control form-control-lg" id="username" name="username" 
+                                           value="{{ user.username }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="email" class="form-label fw-bold">
+                                        <i class="fas fa-envelope me-1"></i>Email
+                                    </label>
+                                    <input type="email" class="form-control form-control-lg" id="email" name="email" 
+                                           value="{{ user.email }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Account Settings -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary mb-3">
+                                    <i class="fas fa-cog me-2"></i>Account Settings
+                                </h5>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="role" class="form-label fw-bold">
+                                        <i class="fas fa-user-shield me-1"></i>Role
+                                    </label>
+                                    <select class="form-select form-select-lg" id="role" name="role">
+                    <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
+                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                </select>
+            </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="lives" class="form-label fw-bold">
+                                        <i class="fas fa-heart me-1"></i>Lives
+                                    </label>
+                                    <input type="number" class="form-control form-control-lg" id="lives" name="lives" 
+                                           value="{{ user.lives }}" min="0" max="5">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="coins" class="form-label fw-bold">
+                                        <i class="fas fa-coins me-1"></i>Coins
+                                    </label>
+                                    <input type="number" class="form-control form-control-lg" id="coins" name="coins" 
+                                           value="{{ user.coins }}" min="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Level & Experience -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary mb-3">
+                                    <i class="fas fa-chart-line me-2"></i>Level & Experience
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="account_level" class="form-label fw-bold">
+                                        <i class="fas fa-star me-1"></i>Account Level
+                                    </label>
+                                    <input type="number" class="form-control form-control-lg" id="account_level" name="account_level" 
+                                           value="{{ user.account_level }}" min="1">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="current_exp" class="form-label fw-bold">
+                                        <i class="fas fa-bolt me-1"></i>Current EXP
+                                    </label>
+                                    <input type="number" class="form-control form-control-lg" id="current_exp" name="current_exp" 
+                                           value="{{ user.current_exp }}" step="0.01" min="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Language Preferences -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary mb-3">
+                                    <i class="fas fa-language me-2"></i>Language Preferences
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="preferred_language" class="form-label fw-bold">
+                                        <i class="fas fa-globe me-1"></i>Preferred Language
+                                    </label>
+                                    <select class="form-select form-select-lg" id="preferred_language" name="preferred_language">
+                                        <option value="">Select Language</option>
+                                        <option value="tagalog" {% if user.preferred_language == 'tagalog' %}selected{% endif %}>Tagalog</option>
+                                        <option value="waray" {% if user.preferred_language == 'waray' %}selected{% endif %}>Waray</option>
+                                        <option value="cebuano" {% if user.preferred_language == 'cebuano' %}selected{% endif %}>Cebuano</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="lesson_language" class="form-label fw-bold">
+                                        <i class="fas fa-book me-1"></i>Lesson Language
+                                    </label>
+                                    <select class="form-select form-select-lg" id="lesson_language" name="lesson_language">
+                                        <option value="">Select Language</option>
+                                        <option value="tagalog" {% if user.lesson_language == 'tagalog' %}selected{% endif %}>Tagalog</option>
+                                        <option value="waray" {% if user.lesson_language == 'waray' %}selected{% endif %}>Waray</option>
+                                        <option value="cebuano" {% if user.lesson_language == 'cebuano' %}selected{% endif %}>Cebuano</option>
+                                    </select>
+            </div>
+            </div>
+            </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+            </div>
+        </form>
+    </div>
+            </div>
+
+            <!-- User Progress Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">Learning Progress</h3>
+            </div>
+                <div class="card-body">
+                    {% if detailed_progress %}
+                        <ul class="list-group">
+                        {% for entry in detailed_progress %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-language me-2"></i>{{ entry.lesson | title }}</span>
+                                <span class="badge bg-primary">Highest Unlocked: Level {{ entry.highest_unlocked }}</span>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No progress data found</h5>
+                            <p class="text-muted">This user hasn't started any lessons yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+    </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Password Reset Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">Reset Password</h3>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('admin.reset_password', user_id=user.id) }}" method="post">
+                        <div class="form-group mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100">
+                            <i class="fas fa-key"></i> Reset Password
+                        </button>
+                    </form>
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        <small>Passwords are securely hashed before storage.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete User Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Danger Zone</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Warning:</strong> This action cannot be undone. All user data will be permanently deleted.
+                    </div>
+                    <button type="button" class="btn btn-danger w-100" onclick="confirmDelete('{{ user.username }}', '{{ user.id }}')">
+                        <i class="fas fa-trash"></i> Delete User Account
+                    </button>
+                </div>
+            </div>
+
+            <!-- Item Inventory Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Item Inventory</h3>
+                </div>
+                <div class="card-body">
+                    {% if user_items %}
+                        <div class="row">
+                            {% for user_item in user_items %}
+                            <div class="col-6 mb-3">
+                                <div class="item-card text-center p-3 border rounded">
+                                    {% if user_item.image_url %}
+                                        <img src="{{ user_item.image_url }}" alt="{{ user_item.name }}" 
+                                             class="img-fluid mb-2" style="height: 60px; object-fit: contain;">
+                                    {% elif user_item.filename %}
+                                        <img src="https://uktdymsgfgodbwesdvsj.supabase.co/storage/v1/object/public/items/{{ user_item.filename }}" alt="{{ user_item.name }}" 
+                                             class="img-fluid mb-2" style="height: 60px; object-fit: contain;">
+                                    {% else %}
+                                        <div class="item-placeholder mb-2">
+                                            <i class="fas fa-box"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="fw-bold small">{{ user_item.name or 'Unknown Item' }}</div>
+                                    <div class="text-muted small">Qty: {{ user_item.quantity }}</div>
+            </div>
+        </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Items</h5>
+                            <p class="text-muted">This user has no items in their inventory.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-thumbnail {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-placeholder {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+}
+
+.item-card {
+    background: #f8fafc;
+    transition: all 0.3s ease;
+}
+
+.item-card:hover {
+    background: #eef2ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.item-placeholder {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 1.5rem;
+    margin: 0 auto;
+}
+
+.progress-entry {
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-left: 4px solid #667eea;
+    transition: all 0.3s ease;
+}
+
+.progress-entry:hover {
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    transform: translateX(8px);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+}
+
+.progress {
+    background-color: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    border-radius: 10px;
+}
+</style>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete user <strong id="deleteUserName"></strong>?</p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This action cannot be undone. All user data including:
+                    <ul class="mb-0 mt-2">
+                        <li>User profile and settings</li>
+                        <li>Learning progress and achievements</li>
+                        <li>Item inventory and purchases</li>
+                        <li>Avatar selections</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete User Account
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(username, userId) {
+    document.getElementById('deleteUserName').textContent = username;
+    document.getElementById('deleteForm').action = `/admin/user/${userId}/delete`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'admin/base.html' %}
+{% block content %}
+<h2>Lesson Management</h2>
+
+<h3>Tagalog Lessons</h3>
+<ul>{% for lesson in tagalog %}
+    <li>Level {{ lesson.level }} - {{ lesson.tagalog }}</li>
+{% endfor %}</ul>
+
+<h3>Waray Lessons</h3>
+<ul>{% for lesson in waray %}
+    <li>Level {{ lesson.level }} - {{ lesson.waray }}</li>
+{% endfor %}</ul>
+
+<h3>Cebuano Lessons</h3>
+<ul>{% for lesson in cebuano %}
+    <li>Level {{ lesson.level }} - {{ lesson.cebuano }}</li>
+{% endfor %}</ul>
+{% endblock %}

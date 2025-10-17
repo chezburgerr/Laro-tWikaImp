@@ -1,0 +1,46 @@
+#player-sprite,
+#enemy-sprite {
+  height: 200px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-top: 1em;
+  transition: opacity 0.1s ease-in-out;
+  will-change: opacity;
+}
+#slash-projectile {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 150px;
+  height: 100px;
+  background-image: url('/static/sprites/yellowslash.gif');
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  display: none;
+  z-index: 10;
+  transition: all 0.6s linear;
+}
+
+#enemy-slash-projectile {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 150px;
+  height: 100px;
+  pointer-events: none;
+  display: none;
+  z-index: 10;
+  transition: all 0.6s linear;
+}
+
+#enemy-slash-projectile img {
+  transform: scaleX(-1); /* Flip the image horizontally */
+}
+
+
+
+

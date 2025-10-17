@@ -1,0 +1,13 @@
+{% extends 'admin_layout.html' %}
+
+{% block content %}
+<h2>Upload New Lesson File</h2>
+<form action="{{ url_for('admin.upload_lesson') }}" method="POST" enctype="multipart/form-data" class="mb-4">
+  <div class="mb-3">
+    <label for="lesson_file" class="form-label">Lesson File (.txt)</label>
+    <input class="form-control" type="file" id="lesson_file" name="lesson_file" accept=".txt" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Upload Lesson</button>
+</form>
+<p class="text-muted">Note: Filename must follow <code>tagalog_lvlX.txt</code>, <code>waray_lvlX.txt</code>, or <code>cebuano_lvlX.txt</code></p>
+{% endblock %}

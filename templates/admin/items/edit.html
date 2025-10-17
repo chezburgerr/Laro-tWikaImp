@@ -1,0 +1,37 @@
+{% extends 'admin_layout.html' %}
+
+{% block content %}
+<h1 class="mb-4">{{ title }}</h1>
+<a href="{{ url_for('admin.manage_items') }}" class="btn btn-secondary mb-3">Back to Items List</a>
+
+<div class="card">
+    <div class="card-header">
+        Edit Item: {{ item.name }}
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('admin.edit_item', item_id=item.id) }}" method="POST">
+            <div class="mb-3">
+                <label for="filename" class="form-label">Filename (e.g., item_sword.png)</label>
+                <input type="text" class="form-control" id="filename" name="filename" value="{{ item.filename }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="name" class="form-label">Item Name</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ item.name }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="price" class="form-label">Price</label>
+                <input type="number" class="form-control" id="price" name="price" value="{{ item.price }}" min="0" required>
+            </div>
+            <div class="mb-3">
+                <label for="required_level" class="form-label">Required Level</label>
+                <input type="number" class="form-control" id="required_level" name="required_level" value="{{ item.required_level }}" min="1" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description (Optional)</label>
+                <textarea class="form-control" id="description" name="description" rows="3">{{ item.description | default('', true) }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Item</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

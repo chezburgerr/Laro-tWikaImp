@@ -1,0 +1,461 @@
+{% extends 'admin_layout.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">📊 Admin Dashboard</h1>
+            <p class="text-muted mb-0">Welcome back! Here's your platform overview.</p>
+        </div>
+        <div class="text-end">
+            <small class="text-muted">Last updated: {{ current_time }}</small>
+        </div>
+    </div>
+
+    <!-- Key Metrics Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="metric-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Users</h6>
+                            <h3 class="fw-bold mb-1">{{ total_users }}</h3>
+                            <small class="text-success">
+                                <i class="fas fa-arrow-up me-1"></i>+{{ new_today }} today
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="metric-icon bg-success bg-opacity-10 text-success">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Active Users</h6>
+                            <h3 class="fw-bold mb-1">{{ active_users_today }}</h3>
+                            <small class="text-info">Today's activity</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="metric-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Administrators</h6>
+                            <h3 class="fw-bold mb-1">{{ total_admins }}</h3>
+                            <small class="text-warning">Platform managers</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="metric-icon bg-info bg-opacity-10 text-info">
+                                <i class="fas fa-book"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Lessons</h6>
+                            <h3 class="fw-bold mb-1">{{ total_lessons|default(0) }}</h3>
+                            <small class="text-info">Across all languages</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Most Attempted/Stuck Levels by Lesson -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2 text-danger"></i>Most Attempted / Stuck Levels by Lesson
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Lesson</th>
+                                    <th>Level</th>
+                                    <th>Attempts</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lesson, data in lesson_most_attempted_levels.items() %}
+                                    <tr>
+                                        <td class="fw-bold text-capitalize">{{ lesson }}</td>
+                                        {% if data %}
+                                            <td>Level {{ data.level }}</td>
+                                            <td>{{ data.attempts }}</td>
+                                        {% else %}
+                                            <td colspan="2" class="text-muted">No data</td>
+                                        {% endif %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Growth Metrics Row -->
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+      <div class="card-body">
+                    <h6 class="text-muted mb-3">📈 User Growth</h6>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="border-end">
+                                <h4 class="fw-bold text-primary">{{ new_today }}</h4>
+                                <small class="text-muted">Today</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border-end">
+                                <h4 class="fw-bold text-success">{{ new_week }}</h4>
+                                <small class="text-muted">This Week</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="fw-bold text-info">{{ new_month }}</h4>
+                            <small class="text-muted">This Month</small>
+                        </div>
+                    </div>
+      </div>
+    </div>
+  </div>
+        
+  <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+      <div class="card-body">
+                    <h6 class="text-muted mb-3">🎯 Platform Stats</h6>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="border-end">
+                                <h4 class="fw-bold text-warning">{{ total_questions|default(0) }}</h4>
+                                <small class="text-muted">Questions</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border-end">
+                                <h4 class="fw-bold text-danger">{{ total_items|default(0) }}</h4>
+                                <small class="text-muted">Items</small>
+      </div>
+    </div>
+                        <div class="col-4">
+                            <h4 class="fw-bold text-secondary">{{ total_avatars|default(0) }}</h4>
+                            <small class="text-muted">Avatars</small>
+  </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+      <div class="card-body">
+                    <h6 class="text-muted mb-3">💰 Economy Overview</h6>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="border-end">
+                                <h4 class="fw-bold text-success">{{ total_coins|default(0) }}</h4>
+                                <small class="text-muted">Total Coins</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border-end">
+                                <h4 class="fw-bold text-info">{{ avg_level|default(1) }}</h4>
+                                <small class="text-muted">Avg Level</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="fw-bold text-warning">{{ total_lives|default(0) }}</h4>
+                            <small class="text-muted">Total Lives</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2 text-primary"></i>User Registration Trend
+                    </h5>
+  </div>
+      <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+    <canvas id="registrationChart"></canvas>
+</div>
+      </div>
+    </div>
+  </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2 text-success"></i>User Role Distribution
+                    </h5>
+                </div>
+      <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="roleChart"></canvas>
+                    </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-globe me-2 text-info"></i>Language Preferences
+                    </h5>
+                </div>
+      <div class="card-body">
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="prefLangChart"></canvas>
+                    </div>
+      </div>
+    </div>
+  </div>
+        
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-graduation-cap me-2 text-warning"></i>Learning Progress by Language
+                    </h5>
+                </div>
+      <div class="card-body">
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="lessonLangChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Analytics -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trophy me-2 text-danger"></i>Top Performing Users
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if top_users %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>User</th>
+                                    <th>Level</th>
+                                    <th>EXP</th>
+                                    <th>Coins</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in top_users %}
+                                <tr>
+                                    <td>
+                                        {% if loop.index == 1 %}
+                                            <span class="badge bg-warning">🥇</span>
+                                        {% elif loop.index == 2 %}
+                                            <span class="badge bg-secondary">🥈</span>
+                                        {% elif loop.index == 3 %}
+                                            <span class="badge bg-bronze">🥉</span>
+                                        {% else %}
+                                            <span class="text-muted">#{{ loop.index }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-2">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">{{ user.username }}</div>
+                                                <small class="text-muted">{{ user.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-primary">Level {{ user.account_level }}</span></td>
+                                    <td><span class="text-success fw-bold">{{ "%.1f"|format(user.current_exp) }}</span></td>
+                                    <td><span class="text-warning fw-bold">{{ user.coins }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-trophy fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No user data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2 text-info"></i>Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_activity %}
+                    <div class="activity-timeline">
+                        {% for activity in recent_activity %}
+                        <div class="activity-item d-flex mb-3">
+                            <div class="activity-icon me-3">
+                                <i class="fas fa-user-plus text-success"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="fw-bold">{{ activity.username }}</div>
+                                <small class="text-muted">{{ activity.action }} - {{ activity.timestamp }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No recent activity</p>
+                    </div>
+                    {% endif %}
+                </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart Data Scripts -->
+<script type="application/json" id="reg_chart_labels">{{ reg_chart_data.labels|tojson }}</script>
+<script type="application/json" id="reg_chart_data">{{ reg_chart_data.counts|tojson }}</script>
+<script type="application/json" id="role_labels">{{ role_counts.keys()|list|tojson }}</script>
+<script type="application/json" id="role_data">{{ role_counts.values()|list|tojson }}</script>
+<script type="application/json" id="pref_lang_labels">{{ pref_lang_counts.keys()|list|tojson }}</script>
+<script type="application/json" id="pref_lang_data">{{ pref_lang_counts.values()|list|tojson }}</script>
+<script type="application/json" id="lesson_lang_labels">{{ lesson_lang_chart_labels|tojson }}</script>
+<script type="application/json" id="lesson_lang_data">{{ lesson_lang_chart_data|tojson }}</script>
+
+<!-- Custom Styles -->
+<style>
+.metric-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.activity-timeline .activity-icon {
+    width: 40px;
+    height: 40px;
+    background: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+}
+
+.bg-bronze {
+    background-color: #cd7f32 !important;
+}
+
+.chart-container {
+    position: relative;
+    margin: auto;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.border-left-primary {
+    border-left: 4px solid #0d6efd !important;
+}
+
+.border-left-success {
+    border-left: 4px solid #198754 !important;
+}
+
+.border-left-warning {
+    border-left: 4px solid #ffc107 !important;
+}
+
+.border-left-info {
+    border-left: 4px solid #0dcaf0 !important;
+}
+</style>
+
+<script src="{{ url_for('static', filename='js/dashboard_charts.js') }}"></script>
+{% endblock %}

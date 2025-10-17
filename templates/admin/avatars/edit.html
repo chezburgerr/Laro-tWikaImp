@@ -1,0 +1,29 @@
+{% extends 'admin_layout.html' %}
+
+{% block content %}
+<h1 class="mb-4">{{ title }}</h1>
+<a href="{{ url_for('admin.manage_avatars') }}" class="btn btn-secondary mb-3">Back to Avatars List</a>
+
+<div class="card">
+    <div class="card-header">
+        Edit Avatar: {{ avatar.filename }}
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('admin.edit_avatar', avatar_id=avatar.id) }}" method="POST">
+            <div class="mb-3">
+                <label for="filename" class="form-label">Filename (e.g., avatar_knight.png)</label>
+                <input type="text" class="form-control" id="filename" name="filename" value="{{ avatar.filename }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="price" class="form-label">Price</label>
+                <input type="number" class="form-control" id="price" name="price" value="{{ avatar.price }}" min="0" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description (Optional)</label>
+                <textarea class="form-control" id="description" name="description" rows="3">{{ avatar.description | default('', true) }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Avatar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
